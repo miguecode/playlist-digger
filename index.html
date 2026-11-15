@@ -32,18 +32,81 @@
       <main class="main">
         <!-- Pantalla inicial: zona para soltar el CSV -->
         <section class="welcome" id="welcome">
-          <div class="dropzone" id="dropzone">
-            <div class="dropzone__icon" id="dropzone-icon"></div>
-            <h1 class="dropzone__title">Explorá tu playlist</h1>
-            <p class="dropzone__text">
-              Arrastrá acá un CSV exportado con Exportify o elegilo desde tu computadora.
-            </p>
-            <button class="btn btn--primary" id="btn-choose" type="button">Elegir archivo</button>
-            <p class="dropzone__hint">
-              ¿Todavía no tenés el CSV? Exportalo desde
-              <a href="https://exportify.net/" target="_blank" rel="noopener noreferrer">Exportify</a>.
-              Todo se procesa en tu navegador: el archivo no se sube a ningún servidor.
-            </p>
+          <div class="welcome__inner">
+            <header class="welcome__head">
+              <h1 class="welcome__title">Explorá tu playlist</h1>
+              <p class="welcome__lead">
+                Convertí el CSV de una playlist de Spotify en una tabla para buscar, ordenar y filtrar. Son tres pasos:
+              </p>
+            </header>
+
+            <ol class="steps">
+              <li class="step">
+                <div class="step__art art-export" aria-hidden="true">
+                  <div class="mini-row">
+                    <span class="mini-cover mini-cover--a"></span>
+                    <span class="mini-lines"><span class="mini-line mini-line--lg"></span><span class="mini-line mini-line--sm"></span></span>
+                    <span class="mini-btn">Export</span>
+                  </div>
+                  <div class="mini-row is-active">
+                    <span class="mini-cover mini-cover--b"></span>
+                    <span class="mini-lines"><span class="mini-line mini-line--lg"></span><span class="mini-line mini-line--sm"></span></span>
+                    <span class="mini-btn mini-btn--on">Export</span>
+                  </div>
+                  <div class="mini-row">
+                    <span class="mini-cover mini-cover--c"></span>
+                    <span class="mini-lines"><span class="mini-line mini-line--lg"></span><span class="mini-line mini-line--sm"></span></span>
+                    <span class="mini-btn">Export</span>
+                  </div>
+                </div>
+                <span class="step__num">1</span>
+                <h2 class="step__title">Exportá tu playlist</h2>
+                <p class="step__text">
+                  Entrá a Exportify, iniciá sesión con tu cuenta de Spotify y tocá <strong>Export</strong> en la playlist que quieras.
+                </p>
+                <a class="btn btn--ghost step__action" id="step-exportify" href="https://exportify.net/" target="_blank" rel="noopener noreferrer"><span>Ir a Exportify</span></a>
+              </li>
+
+              <li class="step">
+                <div class="step__art art-file" aria-hidden="true">
+                  <svg viewBox="0 0 120 140" width="104" height="121" focusable="false">
+                    <path class="file__body" d="M12 4h66l30 30v100a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4z"/>
+                    <path class="file__fold" d="M78 4l30 30H82a4 4 0 0 1-4-4z"/>
+                    <rect class="file__row" x="24" y="56" width="72" height="8" rx="4"/>
+                    <rect class="file__row file__row--dim" x="24" y="72" width="58" height="8" rx="4"/>
+                    <rect class="file__row file__row--dim" x="24" y="88" width="66" height="8" rx="4"/>
+                    <rect class="file__badge" x="24" y="106" width="44" height="18" rx="9"/>
+                    <text class="file__label" x="46" y="119" text-anchor="middle">.csv</text>
+                  </svg>
+                </div>
+                <span class="step__num">2</span>
+                <h2 class="step__title">Guardá el archivo CSV</h2>
+                <p class="step__text">
+                  Se descarga un archivo <strong>.csv</strong> con todas las canciones y sus datos: artista, álbum, popularidad, audio y más.
+                </p>
+              </li>
+
+              <li class="step step--drop">
+                <div class="dropzone" id="dropzone">
+                  <div class="dropzone__icon" id="dropzone-icon"></div>
+                  <span class="step__num">3</span>
+                  <h2 class="step__title">Soltalo acá</h2>
+                  <p class="dropzone__text">
+                    Arrastrá el CSV hasta esta zona o elegilo desde tu computadora.
+                  </p>
+                  <button class="btn btn--primary" id="btn-choose" type="button">Elegir archivo</button>
+                  <p class="dropzone__hint">
+                    Todo se procesa en tu navegador: el archivo no se sube a ningún servidor.
+                  </p>
+                </div>
+              </li>
+            </ol>
+
+            <section class="examples" aria-labelledby="examples-title">
+              <h2 class="examples__title" id="examples-title">¿No tenés un CSV a mano?</h2>
+              <p class="examples__text">Probá la tabla con una playlist de ejemplo, a un clic.</p>
+              <div class="examples__list" id="examples-list"></div>
+            </section>
           </div>
         </section>
 

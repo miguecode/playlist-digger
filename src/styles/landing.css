@@ -1,0 +1,381 @@
+/* ───────────── Pantalla inicial: tutorial en 3 pasos + ejemplos ───────────── */
+.welcome {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  padding: 32px 16px 40px;
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, rgba(30, 215, 96, 0.18) 0, rgba(18, 18, 18, 0) 320px), var(--bg);
+  overflow: auto;
+}
+
+/* margin:auto centra sin cortar el principio cuando el contenido es más alto que la pantalla */
+.welcome__inner {
+  width: min(1080px, 100%);
+  margin: auto;
+  display: grid;
+  gap: 32px;
+}
+
+.welcome__head {
+  text-align: center;
+}
+
+.welcome__title {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.welcome__lead {
+  max-width: 560px;
+  margin: 12px auto 0;
+  color: var(--text-2);
+  font-size: 16px;
+  text-wrap: pretty;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 20px;
+  border-radius: 16px;
+  background: var(--surface-2);
+  text-align: center;
+}
+
+/* Flechita que conecta un paso con el siguiente */
+.step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -17px;
+  z-index: 1;
+  width: 10px;
+  height: 10px;
+  border-top: 3px solid var(--text-3);
+  border-right: 3px solid var(--text-3);
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.step__art {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 148px;
+  margin-bottom: 8px;
+}
+
+.step__num {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--green);
+  color: #000;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.step__title {
+  margin: 4px 0 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.step__text {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 14px;
+  text-wrap: pretty;
+}
+
+.step__text strong {
+  color: var(--text);
+}
+
+.step__action {
+  margin-top: auto;
+}
+
+.step__text + .step__action {
+  margin-top: 12px;
+}
+
+/* Paso 1: maqueta mínima de una lista de playlists con su botón Export */
+.art-export {
+  align-content: center;
+  gap: 8px;
+}
+
+.mini-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--surface-3);
+}
+
+.mini-row.is-active {
+  box-shadow: inset 0 0 0 1px var(--green);
+}
+
+.mini-cover {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+}
+
+.mini-cover--a {
+  background: linear-gradient(135deg, #5038a0, #8d67ab);
+}
+
+.mini-cover--b {
+  background: linear-gradient(135deg, #1e7f4d, #1ed760);
+}
+
+.mini-cover--c {
+  background: linear-gradient(135deg, #b02897, #f037a5);
+}
+
+.mini-lines {
+  flex: 1;
+  display: grid;
+  gap: 5px;
+}
+
+.mini-line {
+  display: block;
+  height: 5px;
+  border-radius: 3px;
+  background: #4d4d4d;
+}
+
+.mini-line--lg {
+  width: 80%;
+}
+
+.mini-line--sm {
+  width: 45%;
+  background: #3a3a3a;
+}
+
+.mini-btn {
+  flex: none;
+  padding: 3px 10px;
+  border-radius: 500px;
+  background: #3a3a3a;
+  color: var(--text-2);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.mini-btn--on {
+  background: var(--green);
+  color: #000;
+}
+
+/* Paso 2: archivo .csv */
+.file__body {
+  fill: var(--surface-3);
+  stroke: #5a5a5a;
+  stroke-width: 2;
+}
+
+.file__fold {
+  fill: #4d4d4d;
+}
+
+.file__row {
+  fill: #8f8f8f;
+}
+
+.file__row--dim {
+  fill: #4d4d4d;
+}
+
+.file__badge {
+  fill: var(--green);
+}
+
+.file__label {
+  fill: #000;
+  font: 800 12px var(--font);
+}
+
+/* Paso 3: la zona para soltar el archivo */
+.step--drop {
+  padding: 0;
+  background: none;
+}
+
+.dropzone {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 20px;
+  border: 2px dashed #535353;
+  border-radius: 16px;
+  text-align: center;
+}
+
+.dropzone__icon {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  margin-bottom: 8px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  color: var(--green);
+}
+
+.dropzone__text {
+  margin: 0 0 8px;
+  color: var(--text-2);
+  font-size: 14px;
+  text-wrap: pretty; /* evita que quede una palabra suelta en la última línea */
+}
+
+.dropzone__hint {
+  margin: 8px 0 0;
+  color: var(--text-3);
+  font-size: 13px;
+  text-wrap: pretty;
+}
+
+/* Ejemplos de un clic */
+.examples {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.examples__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.examples__text {
+  margin: 0 0 12px;
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+.examples__list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.example {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: min(400px, 100%);
+  padding: 10px 16px 10px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--surface-2);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.example:hover {
+  background: var(--surface-3);
+}
+
+.example:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.example__cover {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #1e7f4d, #1ed760);
+  color: #000;
+}
+
+.example__body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+
+.example__title {
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.example__meta {
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.example__go {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--green);
+  color: #000;
+}
+
+@media (max-width: 860px) {
+  .steps {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 440px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .step:not(:last-child)::after {
+    top: auto;
+    right: auto;
+    bottom: -17px;
+    left: 50%;
+    transform: translateX(-50%) rotate(135deg);
+  }
+}

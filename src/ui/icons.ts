@@ -13,6 +13,7 @@ const PATHS = {
   arrow: '<path d="M12 4.5 18.5 12H14v7.5h-4V12H5.5z"/>',
   chevron: '<path d="m7.4 9.6 4.6 4.6 4.6-4.6L18 11l-6 6-6-6z"/>',
   info: '<path fill-rule="evenodd" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-6h2zm0-8h-2V7h2z"/>',
+  play: '<path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11.04-6.86a1 1 0 0 0 0-1.72L9.5 4.28A1 1 0 0 0 8 5.14z"/>',
   note: '<path d="M19 3v12.5a3.5 3.5 0 1 1-2-3.16V7.3L9 9v8.5a3.5 3.5 0 1 1-2-3.16V6z"/>',
 } as const;
 

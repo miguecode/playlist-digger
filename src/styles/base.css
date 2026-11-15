@@ -273,66 +273,6 @@ a.btn {
   font-weight: 800;
 }
 
-/* ───────────── Pantalla inicial ───────────── */
-.welcome {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  place-items: center;
-  padding: 24px 16px;
-  border-radius: var(--radius);
-  background:
-    linear-gradient(180deg, rgba(30, 215, 96, 0.18) 0, rgba(18, 18, 18, 0) 320px), var(--bg);
-  overflow: auto;
-}
-
-.dropzone {
-  display: grid;
-  justify-items: center;
-  gap: 16px;
-  max-width: 580px;
-  padding: 48px 32px;
-  border: 2px dashed #535353;
-  border-radius: 16px;
-  text-align: center;
-}
-
-.dropzone__icon {
-  display: grid;
-  place-items: center;
-  width: 88px;
-  height: 88px;
-  border-radius: 50%;
-  background: var(--surface-3);
-  color: var(--green);
-}
-
-.dropzone__title {
-  margin: 0;
-  font-size: clamp(2rem, 5vw, 3rem);
-  font-weight: 900;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-}
-
-.dropzone__text {
-  margin: 0;
-  color: var(--text-2);
-  font-size: 16px;
-  text-wrap: pretty; /* evita que quede una palabra suelta en la última línea */
-}
-
-.dropzone__hint {
-  margin: 8px 0 0;
-  color: var(--text-3);
-  font-size: 13px;
-  text-wrap: pretty;
-}
-
-.dropzone__hint a {
-  color: var(--green);
-}
-
 /* ───────────── Vista con datos ───────────── */
 .workspace {
   flex: 1;

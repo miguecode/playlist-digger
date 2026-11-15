@@ -25,6 +25,13 @@ Arrastrás el CSV y obtenés una tabla interactiva con búsqueda, orden, columna
 - Ícono ⓘ en cada columna y cada filtro con una explicación corta (qué es y de dónde sale el dato); funciona con mouse, toque y teclado.
 - Atajo `/` para ir a la búsqueda.
 
+## Playlists de ejemplo
+
+La pantalla inicial explica el proceso en tres pasos y ofrece abrir una playlist de ejemplo con un clic.
+Para sumar una: copiá el CSV de Exportify a `public/examples/<id>.csv` (sin datos personales: la columna
+"Added By" debería estar vacía o anonimizada) y agregala a la lista `EXAMPLES` de `src/lib/examples.ts`.
+Un test comprueba que cada ejemplo exista, sea un CSV válido y no tenga usuarios reales.
+
 ## Desarrollo
 
 ```bash

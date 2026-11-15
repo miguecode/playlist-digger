@@ -2,9 +2,11 @@ import '@fontsource-variable/figtree';
 import './styles/base.css';
 import './styles/table.css';
 import './styles/filters.css';
+import './styles/landing.css';
 
 import { columnsWithData, exportColumns, type Column } from './lib/columns';
 import { CsvError, parseCsv } from './lib/csv';
+import { EXAMPLES, exampleUrl, type Example } from './lib/examples';
 import { toCsv } from './lib/export';
 import {
   compileFilters,
@@ -100,6 +102,7 @@ const filtersBadge = h('span', { class: 'badge', hidden: true });
 btnFilters.append(icon('filters', 18), h('span', { class: 'btn__label' }, 'Filtros'), filtersBadge);
 byId('link-exportify').prepend(icon('external', 16));
 btnOpen.prepend(icon('upload', 18));
+byId('step-exportify').prepend(icon('external', 16));
 btnExport.append(icon('download', 18), h('span', { class: 'btn__label' }, 'Exportar CSV'));
 btnExport.title = 'Descarga las canciones y columnas que ves ahora';
 btnExport.setAttribute('aria-label', 'Exportar CSV');
@@ -351,6 +354,36 @@ function handleFiles(files: FileList | null | undefined): void {
   if (!first) return;
   if (files.length > 1) showToast('Se carga una playlist a la vez: abrí solo el primer archivo.');
   void loadFile(first);
+}
+
+/** Abre una playlist de ejemplo: se pide a la propia app (mismo origen) y sigue el mismo camino que un archivo elegido. */
+async function loadExample(example: Example): Promise<void> {
+  try {
+    const response = await fetch(exampleUrl(example, import.meta.env.BASE_URL));
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const text = await response.text();
+    await loadFile(new File([text], `${example.id}.csv`, { type: 'text/csv' }));
+  } catch {
+    showToast('No se pudo abrir el ejemplo. Probá de nuevo o elegí tu propio CSV.', true);
+  }
+}
+
+const examplesList = byId('examples-list');
+for (const example of EXAMPLES) {
+  const button = h(
+    'button',
+    { class: 'example', type: 'button', 'aria-label': `Abrir el ejemplo ${example.title}` },
+    h('span', { class: 'example__cover' }, icon('note', 26)),
+    h('span', { class: 'example__body' }, h('span', { class: 'example__title' }, example.title), h('span', { class: 'example__meta' }, example.description)),
+    h('span', { class: 'example__go' }, icon('play', 20)),
+  );
+  button.addEventListener('click', () => {
+    button.disabled = true;
+    void loadExample(example).finally(() => {
+      button.disabled = false;
+    });
+  });
+  examplesList.append(button);
 }
 
 btnChoose.addEventListener('click', () => fileInput.click());
