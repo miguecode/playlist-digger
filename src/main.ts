@@ -100,6 +100,7 @@ byId('dropzone-icon').append(icon('note', 44));
 byId('search-icon').append(icon('search', 20));
 searchClear.append(icon('close', 16));
 btnCloseFilters.append(icon('close', 20));
+byId('btn-collapse-filters').append(icon('collapse', 20));
 
 const filtersBadge = h('span', { class: 'badge', hidden: true });
 btnFilters.append(icon('filters', 18), h('span', { class: 'btn__label' }, 'Filtros'), filtersBadge);
@@ -127,7 +128,7 @@ let heroOwner: string | null = null;
 
 function updateHeroLink(): void {
   const name = heroTitle.textContent ?? '';
-  const url = linksOn ? playlistUrl(name, heroOwner) : null;
+  const url = playlistUrl(name, heroOwner); // no depende del interruptor: el botón siempre está
   heroSpotify.hidden = !url;
   if (url) {
     heroSpotify.href = url;
@@ -139,7 +140,6 @@ function applyLinks(on: boolean): void {
   linksOn = on;
   switchLinks.setAttribute('aria-checked', String(on));
   table.setLinks(on);
-  updateHeroLink();
 }
 
 const table = new VirtualTable((col) => {
@@ -301,6 +301,29 @@ search.addEventListener('keydown', (ev) => {
   else search.blur();
 });
 
+// ───────────────────────── Pantalla completa ─────────────────────────
+
+const btnFullscreen = byId<HTMLButtonElement>('btn-fullscreen');
+
+function paintFullscreen(): void {
+  const on = document.fullscreenElement !== null;
+  btnFullscreen.replaceChildren(icon(on ? 'compress' : 'expand', 18));
+  const label = on ? 'Salir de pantalla completa' : 'Pantalla completa';
+  btnFullscreen.setAttribute('aria-label', label);
+  btnFullscreen.title = label;
+}
+
+if (document.fullscreenEnabled) {
+  paintFullscreen();
+  btnFullscreen.addEventListener('click', () => {
+    const request = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+    request.catch(() => showToast('Tu navegador no permitió la pantalla completa.', true));
+  });
+  document.addEventListener('fullscreenchange', paintFullscreen);
+} else {
+  btnFullscreen.hidden = true; // p. ej. iPhone: Safari no la ofrece
+}
+
 // ───────────────────────── Panel de filtros (en pantallas chicas es un cajón) ─────────────────────────
 
 const desktop = window.matchMedia('(min-width: 901px)');
@@ -313,6 +336,7 @@ function setFiltersOpen(open: boolean): void {
 
 btnFilters.addEventListener('click', () => setFiltersOpen(!workspace.classList.contains('is-filters-open')));
 btnCloseFilters.addEventListener('click', () => setFiltersOpen(false));
+byId('btn-collapse-filters').addEventListener('click', () => setFiltersOpen(false));
 backdrop.addEventListener('click', () => setFiltersOpen(false));
 desktop.addEventListener('change', () => setFiltersOpen(desktop.matches));
 

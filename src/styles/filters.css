@@ -15,6 +15,39 @@
   padding: 16px 16px 8px 20px;
 }
 
+.filters__collapse {
+  /* Como en Spotify: aparece al pasar el mouse por el panel (o al enfocarlo con el teclado). */
+  flex: none;
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  margin-right: -8px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    width 0.15s ease,
+    margin 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.filters:hover .filters__collapse,
+.filters:focus-within .filters__collapse {
+  width: 32px;
+  margin-right: 0;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (hover: none) {
+  .filters__collapse {
+    width: 32px;
+    margin-right: 0;
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
 .filters__title {
   margin: 0;
   margin-right: auto;

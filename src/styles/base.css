@@ -641,6 +641,10 @@ a.btn {
     margin-left: 0;
   }
 
+  .filters__collapse {
+    display: none;
+  }
+
   .btn__label {
     display: none;
   }
