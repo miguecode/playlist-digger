@@ -367,8 +367,46 @@ a.btn {
   text-transform: uppercase;
 }
 
-.hero__title {
+.hero__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
   margin: 4px 0;
+}
+
+.spotify-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 14px 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.spotify-pill:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #1ed760;
+}
+
+.spotify-pill:focus-visible {
+  outline: 2px solid #1ed760;
+  outline-offset: 2px;
+}
+
+.spotify-pill__icon {
+  display: inline-flex;
+}
+
+.hero__title {
+  margin: 0;
   font-size: clamp(1.75rem, 4vw, 3rem);
   font-weight: 900;
   letter-spacing: -0.03em;

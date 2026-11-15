@@ -27,3 +27,9 @@ export const labelUrl = (label: string): string | null => {
   const name = label.replaceAll('"', '').trim();
   return name ? searchUrl(`label:"${name}"`) : null;
 };
+
+/** Búsqueda de playlists por nombre (el CSV no trae el ID ni el dueño de la playlist). */
+export const playlistUrl = (name: string): string | null => {
+  const q = name.trim();
+  return q ? `${SEARCH_BASE}${encodeURIComponent(q)}/playlists` : null;
+};

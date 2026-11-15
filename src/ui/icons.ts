@@ -38,3 +38,16 @@ export function brandMark(size = 32): SVGSVGElement {
     '<rect width="32" height="32" rx="8" fill="#1ed760"/><path fill="#121212" d="M7 16h4v9H7zm7-9h4v18h-4zm7 6h4v12h-4z"/></svg>';
   return template.content.firstElementChild as SVGSVGElement;
 }
+
+/** Isotipo de Spotify (círculo con tres ondas). Solo se usa en el enlace que lleva a contenido de Spotify. */
+export function spotifyMark(size = 20): SVGSVGElement {
+  const template = document.createElement('template');
+  template.innerHTML =
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true" focusable="false">` +
+    '<circle cx="12" cy="12" r="12" fill="#1ed760"/>' +
+    '<g fill="none" stroke="#121212" stroke-linecap="round">' +
+    '<path d="M5.4 8.6c4.3-1.2 9-.8 13.1 1.5" stroke-width="2.1"/>' +
+    '<path d="M6.1 12.2c3.6-1 7.5-.6 10.7 1.3" stroke-width="1.8"/>' +
+    '<path d="M6.8 15.5c2.9-.8 5.8-.5 8.3 1" stroke-width="1.5"/></g></svg>';
+  return template.content.firstElementChild as SVGSVGElement;
+}

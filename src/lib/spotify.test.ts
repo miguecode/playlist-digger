@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { albumUrl, artistUrl, labelUrl, searchUrl } from './spotify';
+import { albumUrl, artistUrl, labelUrl, playlistUrl, searchUrl } from './spotify';
 
 describe('enlaces de búsqueda en Spotify', () => {
   it('codifica el texto y apunta siempre a open.spotify.com', () => {
@@ -29,5 +29,14 @@ describe('enlaces de búsqueda en Spotify', () => {
     expect(searchUrl('   ')).toBeNull();
     expect(labelUrl('""')).toBeNull();
     expect(albumUrl('')).toBeNull();
+  });
+});
+
+describe('playlistUrl', () => {
+  it('busca el nombre en la pestaña de playlists, codificado', () => {
+    expect(playlistUrl(' Rap & Trap/90 ')).toBe('https://open.spotify.com/search/Rap%20%26%20Trap%2F90/playlists');
+  });
+  it('sin nombre → null', () => {
+    expect(playlistUrl('   ')).toBeNull();
   });
 });

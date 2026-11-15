@@ -18,6 +18,7 @@ import {
 import { fmtNumber, formatTotalDuration } from './lib/format';
 import { matchesQuery } from './lib/search';
 import { nextSort, sortTracks, type SortState } from './lib/sort';
+import { playlistUrl } from './lib/spotify';
 import { loadJson, saveJson } from './lib/storage';
 import { parseQuery } from './lib/text';
 import type { Track } from './types';
@@ -25,7 +26,7 @@ import { ColumnsMenu } from './ui/columns-menu';
 import { byId, h } from './ui/dom';
 import { FiltersPanel } from './ui/filters-panel';
 import { infoTip } from './ui/info-tip';
-import { brandMark, icon } from './ui/icons';
+import { brandMark, icon, spotifyMark } from './ui/icons';
 import { VirtualTable } from './ui/table';
 
 /** Un CSV de Exportify pesa unos KB; algo mucho más grande no es una playlist. */
@@ -76,6 +77,7 @@ const topbarActions = byId('topbar-actions');
 const btnChoose = byId('btn-choose');
 const fileInput = byId<HTMLInputElement>('file-input');
 const heroTitle = byId('hero-title');
+const heroSpotify = byId('hero-spotify') as HTMLAnchorElement;
 const heroMeta = byId('hero-meta');
 const search = byId<HTMLInputElement>('search');
 const searchClear = byId('search-clear');
@@ -121,10 +123,21 @@ const LINKS_KEY = 'playlist-viewer:spotify-links';
 const switchLinks = byId<HTMLButtonElement>('switch-links');
 let linksOn = loadJson<unknown>(LINKS_KEY) !== false;
 
+function updateHeroLink(): void {
+  const name = heroTitle.textContent ?? '';
+  const url = linksOn ? playlistUrl(name) : null;
+  heroSpotify.hidden = !url;
+  if (url) {
+    heroSpotify.href = url;
+    heroSpotify.title = `Buscar «${name}» en las playlists de Spotify (el CSV no trae el enlace exacto)`;
+  }
+}
+
 function applyLinks(on: boolean): void {
   linksOn = on;
   switchLinks.setAttribute('aria-checked', String(on));
   table.setLinks(on);
+  updateHeroLink();
 }
 
 const table = new VirtualTable((col) => {
@@ -138,6 +151,7 @@ switchLinks.addEventListener('click', () => {
   saveJson(LINKS_KEY, linksOn);
 });
 switchWrap.append(infoTip('Abrir en Spotify', SWITCH_HELP));
+byId('hero-spotify-icon').append(spotifyMark(20));
 
 const panel = new FiltersPanel(byId('filters-body'), (next) => {
   app.filters = next;
@@ -343,6 +357,7 @@ function openPlaylist(name: string, tracks: Track[]): void {
   searchClear.hidden = true;
 
   heroTitle.textContent = name;
+  updateHeroLink();
   const duration = totalDuration(tracks);
   heroMeta.textContent = duration > 0 ? `${plural(tracks.length)} · ${formatTotalDuration(duration)}` : plural(tracks.length);
   document.title = `${name} · Playlist Viewer`;
