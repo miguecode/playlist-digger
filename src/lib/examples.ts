@@ -13,9 +13,9 @@ export interface Example {
 }
 
 export const EXAMPLES: readonly Example[] = [
-  { id: 'pop', title: 'Pop', tracks: 193, artists: ['Dua Lipa', 'Doja Cat', 'Sabrina Carpenter'], accent: 'pink' },
-  { id: 'rap', title: 'Rap', tracks: 103, artists: ['Eminem', 'Dr. Dre', 'The Notorious B.I.G.'], accent: 'purple' },
-  { id: 'rock', title: 'Rock internacional', tracks: 119, artists: ['Three Days Grace', 'Linkin Park', 'Shinedown'], accent: 'green' },
+  { id: 'pop', title: 'pop', tracks: 193, artists: ['Dua Lipa', 'Doja Cat', 'Sabrina Carpenter'], accent: 'pink' },
+  { id: 'rap', title: 'rap', tracks: 103, artists: ['Eminem', 'Dr. Dre', 'The Notorious B.I.G.'], accent: 'purple' },
+  { id: 'rock', title: 'rock int', tracks: 119, artists: ['Three Days Grace', 'Linkin Park', 'Shinedown'], accent: 'green' },
 ];
 
 /** Texto de la segunda línea de la tarjeta: «193 canciones · Dua Lipa, Doja Cat y más». */

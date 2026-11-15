@@ -18,6 +18,16 @@ import {
 import { fmtNumber, formatTotalDuration } from './lib/format';
 import { matchesQuery } from './lib/search';
 import { nextSort, sortTracks, type SortState } from './lib/sort';
+import {
+  HISTORY_MAX_CSV_CHARS,
+  clearHistory,
+  historyId,
+  listHistory,
+  loadHistoryCsv,
+  removeFromHistory,
+  saveToHistory,
+  type HistoryEntry,
+} from './lib/history';
 import { likelyOwner, playlistUrl } from './lib/spotify';
 import { loadJson, saveJson } from './lib/storage';
 import { parseQuery } from './lib/text';
@@ -25,7 +35,8 @@ import type { Track } from './types';
 import { ColumnsMenu } from './ui/columns-menu';
 import { byId, h } from './ui/dom';
 import { FiltersPanel } from './ui/filters-panel';
-import { infoTip } from './ui/info-tip';
+import { HistoryMenu, historyCard } from './ui/history';
+import { hideInfoTip, infoTip } from './ui/info-tip';
 import { brandMark, icon, spotifyMark } from './ui/icons';
 import { VirtualTable } from './ui/table';
 
@@ -108,6 +119,7 @@ byId('link-exportify').prepend(icon('external', 16));
 btnOpen.prepend(icon('upload', 18));
 byId('step-exportify').prepend(icon('external', 16));
 byId('link-github').prepend(icon('github', 16));
+byId('link-spotify').prepend(spotifyMark(16));
 byId('topbar-github').prepend(icon('github', 18));
 btnExport.append(icon('download', 18), h('span', { class: 'btn__label' }, 'Exportar CSV'));
 btnExport.title = 'Descarga las canciones y columnas que ves ahora';
@@ -399,6 +411,142 @@ function openPlaylist(name: string, tracks: Track[]): void {
   update(true);
 }
 
+// ───────────────────────── Qué playlist se está viendo y el historial ─────────────────────────
+
+type Origin = { kind: 'file' } | { kind: 'example'; id: string } | { kind: 'history'; id: string };
+
+/** Se guarda por pestaña (sessionStorage): con F5 sigue la playlist, pero una visita nueva empieza en la landing. */
+const CURRENT_KEY = 'playlist-viewer:current';
+const baseTitle = document.title;
+let currentHistoryId: string | null = null;
+let history: HistoryEntry[] = [];
+
+function rememberCurrent(origin: Exclude<Origin, { kind: 'file' }> | null): void {
+  try {
+    if (origin) sessionStorage.setItem(CURRENT_KEY, JSON.stringify(origin));
+    else sessionStorage.removeItem(CURRENT_KEY);
+  } catch {
+    /* sin almacenamiento de sesión: con F5 se vuelve a la landing */
+  }
+}
+
+function readCurrent(): Exclude<Origin, { kind: 'file' }> | null {
+  try {
+    const raw: unknown = JSON.parse(sessionStorage.getItem(CURRENT_KEY) ?? 'null');
+    if (raw && typeof raw === 'object') {
+      const { kind, id } = raw as Record<string, unknown>;
+      if ((kind === 'example' || kind === 'history') && typeof id === 'string') return { kind, id };
+    }
+  } catch {
+    /* valor ilegible: se ignora */
+  }
+  return null;
+}
+
+const historySection = byId('history-section');
+const historyList = byId('history-list');
+const historyHandlers = {
+  open: (entry: HistoryEntry): void => void openFromHistory(entry),
+  remove: (entry: HistoryEntry): void => {
+    void removeFromHistory(entry.id).then(() => {
+      if (currentHistoryId === entry.id) currentHistoryId = null;
+      return refreshHistory();
+    });
+  },
+};
+const historyMenu = new HistoryMenu(byId('history-host'), {
+  ...historyHandlers,
+  clearAll: () => clearAllHistory(),
+});
+
+function renderHistory(): void {
+  const now = Date.now();
+  historySection.hidden = history.length === 0;
+  historyList.replaceChildren(...history.map((entry) => historyCard(entry, historyHandlers, now)));
+  historyMenu.setEntries(history, currentHistoryId, now);
+}
+
+async function refreshHistory(): Promise<void> {
+  history = await listHistory();
+  renderHistory();
+}
+
+function clearAllHistory(): void {
+  if (!window.confirm('¿Borrar todas las playlists guardadas en este navegador?')) return;
+  void clearHistory().then(() => {
+    currentHistoryId = null;
+    rememberCurrent(null);
+    return refreshHistory();
+  });
+}
+
+byId('clear-history-landing').addEventListener('click', clearAllHistory);
+
+/** Abre un CSV ya leído y recuerda de dónde vino. Los archivos propios se guardan en el historial. */
+async function openCsv(name: string, text: string, origin: Origin): Promise<void> {
+  const tracks = parseCsv(text); // si el CSV no sirve, lanza CsvError antes de cambiar nada
+  openPlaylist(name, tracks);
+
+  if (origin.kind === 'file') {
+    currentHistoryId = null;
+    rememberCurrent(null);
+    if (text.length > HISTORY_MAX_CSV_CHARS) {
+      showToast('La playlist se abrió, pero es demasiado grande para guardarla en el historial.');
+    } else {
+      const id = historyId(name);
+      try {
+        await saveToHistory({ id, name, savedAt: Date.now(), tracks: tracks.length, durationMs: totalDuration(tracks) }, text);
+        currentHistoryId = id;
+        rememberCurrent({ kind: 'history', id });
+      } catch {
+        showToast('La playlist se abrió, pero tu navegador no permitió guardarla en el historial.');
+      }
+    }
+    history = await listHistory();
+  } else {
+    currentHistoryId = origin.kind === 'history' ? origin.id : null;
+    rememberCurrent(origin);
+  }
+  renderHistory();
+}
+
+async function openFromHistory(entry: HistoryEntry): Promise<void> {
+  const text = await loadHistoryCsv(entry.id);
+  if (text === null) {
+    showToast('Esa playlist ya no está guardada en el historial.', true);
+    await refreshHistory();
+    return;
+  }
+  try {
+    await openCsv(entry.name, text, { kind: 'history', id: entry.id });
+  } catch (error) {
+    showToast(error instanceof CsvError ? error.message : 'No se pudo abrir la playlist guardada.', true);
+  }
+}
+
+/** Vuelve a la pantalla inicial (el logo). */
+function goHome(): void {
+  rememberCurrent(null);
+  currentHistoryId = null;
+  hideInfoTip();
+  historyMenu.setOpen(false);
+  backdrop.hidden = true;
+  workspace.hidden = true;
+  topbarActions.hidden = true;
+  welcome.hidden = false;
+  document.title = baseTitle;
+  renderHistory();
+  window.scrollTo(0, 0);
+}
+
+document.querySelector('.brand')?.addEventListener('click', (ev) => {
+  if (workspace.hidden) return;
+  ev.preventDefault();
+  goHome();
+});
+
+// ───────────────────────── Carga de archivos ─────────────────────────
+
 async function loadFile(file: File): Promise<void> {
   if (/\.zip$/i.test(file.name)) {
     showToast('Eso es un ZIP. Descomprimilo y elegí uno de los CSV de adentro.', true);
@@ -409,7 +557,7 @@ async function loadFile(file: File): Promise<void> {
     return;
   }
   try {
-    openPlaylist(playlistName(file.name), parseCsv(await file.text()));
+    await openCsv(playlistName(file.name), await file.text(), { kind: 'file' });
   } catch (error) {
     showToast(error instanceof CsvError ? error.message : 'No se pudo leer el archivo.', true);
   }
@@ -422,13 +570,16 @@ function handleFiles(files: FileList | null | undefined): void {
   void loadFile(first);
 }
 
-/** Abre una playlist de ejemplo: se pide a la propia app (mismo origen) y sigue el mismo camino que un archivo elegido. */
+async function fetchExample(example: Example): Promise<string> {
+  const response = await fetch(exampleUrl(example, import.meta.env.BASE_URL));
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.text();
+}
+
+/** Abre una playlist de ejemplo: se pide a la propia app (mismo origen). Los ejemplos no van al historial. */
 async function loadExample(example: Example): Promise<void> {
   try {
-    const response = await fetch(exampleUrl(example, import.meta.env.BASE_URL));
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const text = await response.text();
-    await loadFile(new File([text], `${example.title}.csv`, { type: 'text/csv' }));
+    await openCsv(example.title, await fetchExample(example), { kind: 'example', id: example.id });
   } catch {
     showToast('No se pudo abrir el ejemplo. Probá de nuevo o elegí tu propio CSV.', true);
   }
@@ -486,6 +637,39 @@ window.addEventListener('drop', (ev) => {
   overlay.hidden = true;
   handleFiles(ev.dataTransfer?.files);
 });
+
+// ───────────────────────── Al abrir la página ─────────────────────────
+
+/** Con F5 vuelve a abrir lo que se estaba viendo; si ya no se puede, muestra la landing. */
+async function restoreCurrent(current: Exclude<Origin, { kind: 'file' }>): Promise<boolean> {
+  try {
+    if (current.kind === 'example') {
+      const example = EXAMPLES.find((e) => e.id === current.id);
+      if (!example) return false;
+      await openCsv(example.title, await fetchExample(example), current);
+      return true;
+    }
+    const entry = history.find((e) => e.id === current.id);
+    const text = entry ? await loadHistoryCsv(entry.id) : null;
+    if (!entry || text === null) return false;
+    await openCsv(entry.name, text, current);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function boot(): Promise<void> {
+  const current = readCurrent();
+  if (current) welcome.hidden = true; // evita que la landing parpadee mientras se recupera la playlist
+  await refreshHistory();
+  if (current && !(await restoreCurrent(current))) {
+    rememberCurrent(null);
+    welcome.hidden = false;
+  }
+}
+
+void boot();
 
 // ───────────────────────── Exportar ─────────────────────────
 

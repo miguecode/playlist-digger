@@ -34,6 +34,7 @@
 .filters:hover .filters__collapse,
 .filters:focus-within .filters__collapse {
   width: 32px;
+  margin-left: -10px;
   margin-right: 0;
   opacity: 1;
   pointer-events: auto;
@@ -42,6 +43,7 @@
 @media (hover: none) {
   .filters__collapse {
     width: 32px;
+    margin-left: -10px;
     margin-right: 0;
     opacity: 1;
     pointer-events: auto;
@@ -293,6 +295,71 @@ input[type='checkbox']:disabled {
   box-shadow:
     0 16px 24px rgba(0, 0, 0, 0.5),
     0 6px 8px rgba(0, 0, 0, 0.3);
+}
+
+.popover--history {
+  width: 340px;
+}
+
+.popover__note {
+  align-self: center;
+  padding-left: 8px;
+  color: var(--text-3);
+  font-size: 12px;
+}
+
+.hmenu__item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 4px;
+}
+
+.hmenu__item:hover {
+  background: #3e3e3e;
+}
+
+.hmenu__open {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+  padding: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.hmenu__name {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hmenu__meta {
+  color: var(--text-3);
+  font-size: 12px;
+}
+
+.hmenu__empty {
+  margin: 0;
+  padding: 12px 8px;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+@media (max-width: 640px) {
+  .popover--history {
+    position: fixed;
+    top: 60px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+  }
 }
 
 .popover__list {

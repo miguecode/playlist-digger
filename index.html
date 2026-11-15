@@ -36,6 +36,7 @@
             title="Ir a Exportify"
             ><span class="topbar__label">Ir a Exportify</span></a
           >
+          <div class="popover-host" id="history-host"></div>
           <button class="btn btn--ghost" id="btn-open" type="button" aria-label="Cargar otro CSV" title="Cargar otro CSV"><span class="topbar__label">Cargar otro CSV</span></button>
           <button class="btn btn--ghost" id="btn-fullscreen" type="button" aria-label="Pantalla completa" title="Pantalla completa"></button>
         </div>
@@ -114,6 +115,15 @@
               </li>
             </ol>
 
+            <section class="examples" id="history-section" aria-labelledby="history-title" hidden>
+              <h2 class="examples__title" id="history-title">Tus playlists recientes</h2>
+              <p class="examples__text">
+                Quedan guardadas solo en este navegador.
+                <button class="btn btn--text history__clear" id="clear-history-landing" type="button">Borrar historial</button>
+              </p>
+              <div class="examples__list" id="history-list"></div>
+            </section>
+
             <section class="examples" aria-labelledby="examples-title">
               <h2 class="examples__title" id="examples-title">¿No tenés un CSV a mano?</h2>
               <p class="examples__text">Probá la tabla con una playlist de ejemplo, a un clic.</p>
@@ -127,6 +137,7 @@
               </p>
               <p class="legal__links">
                 <a class="legal__link" id="link-github" href="https://github.com/miguecode" target="_blank" rel="noopener noreferrer"><span>Hecho por migue</span></a>
+                <a class="legal__link" id="link-spotify" href="https://open.spotify.com/user/31kzfm4wqpgv2v2cf3s7lyxuo4ke" target="_blank" rel="noopener noreferrer"><span>Mi perfil de Spotify</span></a>
               </p>
             </footer>
           </div>

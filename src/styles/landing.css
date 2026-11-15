@@ -373,6 +373,35 @@
   color: #000;
 }
 
+/* Historial en la landing */
+.hcard {
+  position: relative;
+}
+
+.hcard__remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  opacity: 0;
+  background: rgba(0, 0, 0, 0.55);
+  transition: opacity 0.15s ease;
+}
+
+.hcard:hover .hcard__remove,
+.hcard:focus-within .hcard__remove {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .hcard__remove {
+    opacity: 1;
+  }
+}
+
+.history__clear {
+  margin-left: 4px;
+}
+
 /* Aviso legal y enlaces */
 .legal {
   display: grid;

@@ -105,3 +105,16 @@ export function durationClass(ms: number): DurationClass {
   if (ms < DURATION_LIMITS.long) return 'long';
   return 'podcast';
 }
+
+/** «hace 5 minutos», «ayer», «hace 3 meses». Para fechas del pasado cercano. */
+export function timeAgo(timestamp: number, now: number = Date.now()): string {
+  const seconds = Math.round((timestamp - now) / 1000);
+  const abs = Math.abs(seconds);
+  if (abs < 60) return 'recién';
+  const rtf = new Intl.RelativeTimeFormat('es-AR', { numeric: 'auto' });
+  if (abs < 3600) return rtf.format(Math.round(seconds / 60), 'minute');
+  if (abs < 86_400) return rtf.format(Math.round(seconds / 3600), 'hour');
+  if (abs < 86_400 * 30) return rtf.format(Math.round(seconds / 86_400), 'day');
+  if (abs < 86_400 * 365) return rtf.format(Math.round(seconds / (86_400 * 30)), 'month');
+  return rtf.format(Math.round(seconds / (86_400 * 365)), 'year');
+}
