@@ -18,7 +18,7 @@ import {
 import { fmtNumber, formatTotalDuration } from './lib/format';
 import { matchesQuery } from './lib/search';
 import { nextSort, sortTracks, type SortState } from './lib/sort';
-import { playlistUrl } from './lib/spotify';
+import { likelyOwner, playlistUrl } from './lib/spotify';
 import { loadJson, saveJson } from './lib/storage';
 import { parseQuery } from './lib/text';
 import type { Track } from './types';
@@ -123,13 +123,15 @@ const LINKS_KEY = 'playlist-viewer:spotify-links';
 const switchLinks = byId<HTMLButtonElement>('switch-links');
 let linksOn = loadJson<unknown>(LINKS_KEY) !== false;
 
+let heroOwner: string | null = null;
+
 function updateHeroLink(): void {
   const name = heroTitle.textContent ?? '';
-  const url = linksOn ? playlistUrl(name) : null;
+  const url = linksOn ? playlistUrl(name, heroOwner) : null;
   heroSpotify.hidden = !url;
   if (url) {
     heroSpotify.href = url;
-    heroSpotify.title = `Buscar «${name}» en las playlists de Spotify (el CSV no trae el enlace exacto)`;
+    heroSpotify.title = `Buscar «${name}»${heroOwner ? ` de ${heroOwner}` : ''} en las playlists de Spotify (el CSV no trae el enlace exacto)`;
   }
 }
 
@@ -357,6 +359,7 @@ function openPlaylist(name: string, tracks: Track[]): void {
   searchClear.hidden = true;
 
   heroTitle.textContent = name;
+  heroOwner = likelyOwner(tracks.map((t) => t.addedBy));
   updateHeroLink();
   const duration = totalDuration(tracks);
   heroMeta.textContent = duration > 0 ? `${plural(tracks.length)} · ${formatTotalDuration(duration)}` : plural(tracks.length);

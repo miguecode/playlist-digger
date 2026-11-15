@@ -18,7 +18,7 @@ Arrastrás el CSV y obtenés una tabla interactiva con búsqueda, orden, columna
   - Clic en el nombre de una canción para abrirla en Spotify. Artistas, álbumes y sellos también son enlaces, pero abren una **búsqueda** en Spotify: el CSV de Exportify trae el ID de la canción y no el de los artistas, álbumes ni sellos.
   - El interruptor «Abrir en Spotify» de la barra de herramientas activa o desactiva todos esos enlaces (se recuerda entre visitas).
   - Con una playlist abierta, arriba aparece el enlace al GitHub del autor.
-  - Junto al nombre de la playlist hay un botón «Buscar en Spotify» que busca ese nombre entre las playlists (el CSV no trae el ID ni el dueño). Respeta el interruptor.
+  - Junto al nombre de la playlist hay un botón «Buscar en Spotify» que busca ese nombre junto con quien más canciones agregó (dueño probable) entre las playlists; el CSV no trae el ID ni el dueño reales. Respeta el interruptor.
 - **Filtros** (solo aparecen los que el CSV permite)
   - Fecha de lanzamiento (con atajos por década) y fecha en que se agregó (últimos 7 / 30 días, este año).
   - Artista, género, álbum, sello, tonalidad, compás y "agregada por", con buscador y contadores.

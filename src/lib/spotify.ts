@@ -28,8 +28,30 @@ export const labelUrl = (label: string): string | null => {
   return name ? searchUrl(`label:"${name}"`) : null;
 };
 
-/** Búsqueda de playlists por nombre (el CSV no trae el ID ni el dueño de la playlist). */
-export const playlistUrl = (name: string): string | null => {
-  const q = name.trim();
+/**
+ * Quien más canciones agregó: es lo más probable que sea el dueño de la playlist (no hay certeza en las colaborativas).
+ * Devuelve null si no hay datos o si el valor parece un ID opaco (p. ej. «31abc…» de 24+ caracteres con números),
+ * que no sirve para buscar porque Spotify no lo conoce como texto.
+ */
+export function likelyOwner(addedBy: readonly string[]): string | null {
+  const counts = new Map<string, number>();
+  for (const raw of addedBy) {
+    const name = raw.replace(/^spotify:user:/i, '').trim();
+    if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
+  }
+  let best: string | null = null;
+  let max = 0;
+  for (const [name, n] of counts) {
+    if (n > max) {
+      best = name;
+      max = n;
+    }
+  }
+  return best && !/^(?=.*\d)[a-z0-9]{24,}$/i.test(best) ? best : null;
+}
+
+/** Búsqueda de playlists por nombre (+ dueño probable). El CSV no trae el ID de la playlist. */
+export const playlistUrl = (name: string, owner?: string | null): string | null => {
+  const q = [name.trim(), owner?.trim()].filter(Boolean).join(' ');
   return q ? `${SEARCH_BASE}${encodeURIComponent(q)}/playlists` : null;
 };

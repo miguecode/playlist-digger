@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { albumUrl, artistUrl, labelUrl, playlistUrl, searchUrl } from './spotify';
+import { albumUrl, artistUrl, labelUrl, likelyOwner, playlistUrl, searchUrl } from './spotify';
 
 describe('enlaces de búsqueda en Spotify', () => {
   it('codifica el texto y apunta siempre a open.spotify.com', () => {
@@ -38,5 +38,31 @@ describe('playlistUrl', () => {
   });
   it('sin nombre → null', () => {
     expect(playlistUrl('   ')).toBeNull();
+  });
+});
+
+describe('playlistUrl con dueño', () => {
+  it('suma el dueño a la búsqueda', () => {
+    expect(playlistUrl('Rap', 'migue')).toBe('https://open.spotify.com/search/Rap%20migue/playlists');
+  });
+  it('sin nombre pero con dueño sigue buscando por el dueño; sin ambos → null', () => {
+    expect(playlistUrl(' ', null)).toBeNull();
+  });
+});
+
+describe('likelyOwner', () => {
+  it('elige a quien más agregó', () => {
+    expect(likelyOwner(['ana', 'migue', 'migue', '', 'ana', 'migue'])).toBe('migue');
+  });
+  it('quita el prefijo spotify:user:', () => {
+    expect(likelyOwner(['spotify:user:migue', 'spotify:user:migue'])).toBe('migue');
+  });
+  it('ignora IDs opacos y vacíos', () => {
+    expect(likelyOwner(['31ab2cd3ef4gh5ij6kl7mn8op9qr'])).toBeNull();
+    expect(likelyOwner(['', ''])).toBeNull();
+    expect(likelyOwner([])).toBeNull();
+  });
+  it('un usuario corto con números sigue valiendo', () => {
+    expect(likelyOwner(['migue123'])).toBe('migue123');
   });
 });
