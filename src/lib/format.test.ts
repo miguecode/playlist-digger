@@ -73,12 +73,14 @@ describe('durationClass', () => {
     expect(durationClass(m(1, 45))).toBe('short');
     expect(durationClass(m(3, 22))).toBe('medium');
     expect(durationClass(m(7, 10))).toBe('long');
+    expect(durationClass(m(5, 20))).toBe('long');
     expect(durationClass(m(45))).toBe('podcast');
   });
-  it('los límites pertenecen al tramo siguiente', () => {
+  it('los límites: 2:30 ya es media; hasta 4:35 inclusive es media', () => {
     expect(durationClass(m(2, 29) + 999)).toBe('short');
     expect(durationClass(m(2, 30))).toBe('medium');
-    expect(durationClass(m(5))).toBe('long');
+    expect(durationClass(m(4, 35))).toBe('medium');
+    expect(durationClass(m(4, 35) + 1)).toBe('long');
     expect(durationClass(m(20))).toBe('podcast');
   });
 });

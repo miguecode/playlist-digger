@@ -9,7 +9,7 @@ const COLUMN_HELP: Readonly<Record<string, string>> = {
   release: 'Fecha de lanzamiento del álbum o single en el que salió la canción.',
   addedAt: 'Cuándo se agregó la canción a la playlist, en tu hora local.',
   duration:
-    'Duración en minutos y segundos, con una etiqueta: Corta (menos de 2:30), Media (hasta 5:00), Larga (hasta 20:00) y Podcast (más de 20:00; también puede ser un set o un mix largo).',
+    'Duración en minutos y segundos, con una etiqueta: Corta (menos de 2:30), Media (hasta 4:35), Larga (hasta 20:00) y Podcast (más de 20:00; también puede ser un set o un mix largo).',
   popularity:
     'Índice de 0 a 100 (las cinco estrellas se llenan según el valor exacto) según las reproducciones recientes de la canción (no el total histórico). Si dice «Sin información», Spotify no entregó el dato: un 0 casi siempre significa eso y no que nadie la escuche.',
   explicit:

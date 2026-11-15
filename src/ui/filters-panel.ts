@@ -218,6 +218,8 @@ function facetSection(ctx: Ctx, def: FacetDef, open: boolean): Section | null {
   let query = '';
   let limit = PAGE;
   let counts = new Map<string, number>();
+  /** Ancho (en caracteres) del número más largo visto: las cantidades se alinean sin dejar un hueco de más. */
+  let countChars = 1;
   const items = new Map<string, { input: HTMLInputElement; count: HTMLElement; row: HTMLElement }>();
 
   const list = h('div', { class: 'opts' });
@@ -250,7 +252,9 @@ function facetSection(ctx: Ctx, def: FacetDef, open: boolean): Section | null {
   };
 
   const paint = (): void => {
+    for (const n of counts.values()) countChars = Math.max(countChars, fmtNumber(n).length);
     for (const [value, item] of items) {
+      item.count.style.minWidth = `${countChars}ch`;
       const n = counts.get(value) ?? 0;
       item.count.textContent = fmtNumber(n);
       item.row.classList.toggle('is-zero', n === 0 && !item.input.checked);

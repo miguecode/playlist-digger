@@ -88,8 +88,8 @@ export type DurationClass = 'short' | 'medium' | 'long' | 'podcast';
 
 const MIN = 60_000;
 
-/** Umbrales: una canción pop típica dura 3–4 min; desde 20 min ya es un set, un mix o un podcast. */
-export const DURATION_LIMITS = { short: 2.5 * MIN, medium: 5 * MIN, long: 20 * MIN } as const;
+/** Umbrales: una canción típica dura 3–4 min y desde 4:35 ya se siente larga; desde 20 min ya es un set, un mix o un podcast. */
+export const DURATION_LIMITS = { short: 2.5 * MIN, medium: 4.5 * MIN + 5000, long: 20 * MIN } as const;
 
 export const DURATION_LABELS: Readonly<Record<DurationClass, string>> = {
   short: 'Corta',
@@ -98,10 +98,10 @@ export const DURATION_LABELS: Readonly<Record<DurationClass, string>> = {
   podcast: 'Podcast',
 };
 
-/** Clasifica una duración: menos de 2:30 corta, hasta 5:00 media, hasta 20:00 larga y más, podcast. */
+/** Clasifica una duración: menos de 2:30 corta, hasta 4:35 media, hasta 20:00 larga y más, podcast. */
 export function durationClass(ms: number): DurationClass {
   if (ms < DURATION_LIMITS.short) return 'short';
-  if (ms < DURATION_LIMITS.medium) return 'medium';
+  if (ms <= DURATION_LIMITS.medium) return 'medium';
   if (ms < DURATION_LIMITS.long) return 'long';
   return 'podcast';
 }

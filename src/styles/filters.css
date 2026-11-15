@@ -228,7 +228,6 @@ input[type='checkbox']:disabled {
 
 .opt__count {
   flex: none;
-  min-width: 4ch;
   text-align: right;
   color: var(--text-3);
   font-size: 12px;

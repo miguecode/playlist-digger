@@ -309,15 +309,11 @@ a.cell-title:hover {
   position: absolute;
   inset: 0 auto 0 0;
   overflow: hidden;
-  color: #fff;
+  color: #e6c15a;
 }
 
 .stars__fill svg {
   max-width: none;
-}
-
-.row:hover .stars__fill {
-  color: var(--green);
 }
 
 .chips {
