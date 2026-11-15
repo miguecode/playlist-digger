@@ -27,10 +27,11 @@ Arrastrás el CSV y obtenés una tabla interactiva con búsqueda, orden, columna
 
 ## Playlists de ejemplo
 
-La pantalla inicial explica el proceso en tres pasos y ofrece abrir una playlist de ejemplo con un clic.
-Para sumar una: copiá el CSV de Exportify a `public/examples/<id>.csv` (sin datos personales: la columna
-"Added By" debería estar vacía o anonimizada) y agregala a la lista `EXAMPLES` de `src/lib/examples.ts`.
-Un test comprueba que cada ejemplo exista, sea un CSV válido y no tenga usuarios reales.
+La pantalla inicial explica el proceso en tres pasos y ofrece abrir una playlist de ejemplo con un clic
+(Pop, Rap y Rock internacional). Para sumar una: copiá el CSV de Exportify a `public/examples/<id>.csv`,
+reemplazá el contenido de la columna "Added By" (identifica a una persona real, y estos archivos son públicos)
+y agregala a `EXAMPLES` en `src/lib/examples.ts`. Un test comprueba que cada ejemplo exista, sea un CSV válido,
+coincida con la cantidad de canciones e intérpretes de su tarjeta y no tenga usuarios reales.
 
 ## Desarrollo
 

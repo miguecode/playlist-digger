@@ -6,7 +6,7 @@ import './styles/landing.css';
 
 import { columnsWithData, exportColumns, type Column } from './lib/columns';
 import { CsvError, parseCsv } from './lib/csv';
-import { EXAMPLES, exampleUrl, type Example } from './lib/examples';
+import { EXAMPLES, exampleSummary, exampleUrl, type Example } from './lib/examples';
 import { toCsv } from './lib/export';
 import {
   compileFilters,
@@ -103,6 +103,7 @@ btnFilters.append(icon('filters', 18), h('span', { class: 'btn__label' }, 'Filtr
 byId('link-exportify').prepend(icon('external', 16));
 btnOpen.prepend(icon('upload', 18));
 byId('step-exportify').prepend(icon('external', 16));
+byId('link-github').prepend(icon('github', 16));
 btnExport.append(icon('download', 18), h('span', { class: 'btn__label' }, 'Exportar CSV'));
 btnExport.title = 'Descarga las canciones y columnas que ves ahora';
 btnExport.setAttribute('aria-label', 'Exportar CSV');
@@ -362,7 +363,7 @@ async function loadExample(example: Example): Promise<void> {
     const response = await fetch(exampleUrl(example, import.meta.env.BASE_URL));
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const text = await response.text();
-    await loadFile(new File([text], `${example.id}.csv`, { type: 'text/csv' }));
+    await loadFile(new File([text], `${example.title}.csv`, { type: 'text/csv' }));
   } catch {
     showToast('No se pudo abrir el ejemplo. Probá de nuevo o elegí tu propio CSV.', true);
   }
@@ -373,8 +374,8 @@ for (const example of EXAMPLES) {
   const button = h(
     'button',
     { class: 'example', type: 'button', 'aria-label': `Abrir el ejemplo ${example.title}` },
-    h('span', { class: 'example__cover' }, icon('note', 26)),
-    h('span', { class: 'example__body' }, h('span', { class: 'example__title' }, example.title), h('span', { class: 'example__meta' }, example.description)),
+    h('span', { class: `example__cover example__cover--${example.accent}` }, icon('note', 26)),
+    h('span', { class: 'example__body' }, h('span', { class: 'example__title' }, example.title), h('span', { class: 'example__meta' }, exampleSummary(example))),
     h('span', { class: 'example__go' }, icon('play', 20)),
   );
   button.addEventListener('click', () => {
