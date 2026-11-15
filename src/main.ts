@@ -131,7 +131,7 @@ function updateHeroLink(): void {
   heroSpotify.hidden = !url;
   if (url) {
     heroSpotify.href = url;
-    heroSpotify.title = `Buscar «${name}»${heroOwner ? ` de ${heroOwner}` : ''} en las playlists de Spotify (el CSV no trae el enlace exacto)`;
+    heroSpotify.title = `Buscar esta playlist en las playlists de Spotify por su nombre${heroOwner ? ' y posible dueño' : ''}`;
   }
 }
 
