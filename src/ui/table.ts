@@ -5,7 +5,7 @@ import type { SortState } from '../lib/sort';
 import { trackUrl } from '../lib/spotify';
 import type { Track } from '../types';
 import { h, highlight } from './dom';
-import { icon } from './icons';
+import { icon, starsRow } from './icons';
 import { fitChips } from './chips';
 import { bindTip, hideInfoTip, infoTip } from './info-tip';
 
@@ -252,8 +252,11 @@ export class VirtualTable {
         return track.explicit ? h('div', { class: 'title-cell' }, title, explicitTag()) : title;
       }
 
-      case 'num':
-        return h('span', { class: 'cell-num' }, highlight(text, this.terms));
+      case 'num': {
+        const value = h('span', { class: 'cell-num' }, highlight(text, this.terms));
+        const tag = col.tag?.(track);
+        return tag ? h('div', { class: 'num-tag' }, h('span', { class: `tag tag--${tag.tone}` }, tag.label), value) : value;
+      }
 
       case 'bar': {
         const fill = h('div', { class: 'bar__fill' });
@@ -263,6 +266,18 @@ export class VirtualTable {
           { class: 'bar' },
           h('span', { class: 'bar__value' }, highlight(text, this.terms)),
           h('div', { class: 'bar__track' }, fill),
+        );
+      }
+
+      case 'stars': {
+        const fraction = Math.min(1, Math.max(0, col.bar?.(track) ?? 0));
+        const fill = h('span', { class: 'stars__fill' }, starsRow());
+        fill.style.width = `${fraction * 100}%`;
+        return h(
+          'div',
+          { class: 'stars', role: 'img', 'aria-label': `${col.label}: ${text} de 100` },
+          h('span', { class: 'stars__value' }, highlight(text, this.terms)),
+          h('span', { class: 'stars__row' }, h('span', { class: 'stars__base' }, starsRow()), fill),
         );
       }
 

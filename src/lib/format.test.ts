@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  durationClass,
   fmtNumber,
   formatDay,
   formatDuration,
@@ -63,5 +64,21 @@ describe('números', () => {
   it('pct redondea a entero', () => {
     expect(pct(makeTrack({ danceability: 0.731 }), 'danceability')).toBe(73);
     expect(pct(makeTrack(), 'danceability')).toBeNull();
+  });
+});
+
+describe('durationClass', () => {
+  const m = (min: number, sec = 0): number => (min * 60 + sec) * 1000;
+  it('clasifica por tramos', () => {
+    expect(durationClass(m(1, 45))).toBe('short');
+    expect(durationClass(m(3, 22))).toBe('medium');
+    expect(durationClass(m(7, 10))).toBe('long');
+    expect(durationClass(m(45))).toBe('podcast');
+  });
+  it('los límites pertenecen al tramo siguiente', () => {
+    expect(durationClass(m(2, 29) + 999)).toBe('short');
+    expect(durationClass(m(2, 30))).toBe('medium');
+    expect(durationClass(m(5))).toBe('long');
+    expect(durationClass(m(20))).toBe('podcast');
   });
 });

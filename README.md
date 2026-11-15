@@ -15,6 +15,7 @@ Arrastrás el CSV y obtenés una tabla interactiva con búsqueda, orden, columna
   - Las canciones explícitas llevan una "E" a la derecha del título, con su explicación al pasar el mouse.
   - Si Spotify no entregó un dato (popularidad, BPM, audio...), la celda dice "Sin dato" en vez de un 0 engañoso.
   - Scroll virtual: fluida con miles de canciones.
+  - La duración lleva una etiqueta (Corta, Media, Larga, Podcast) y la popularidad se muestra con cinco estrellas que se llenan según el valor exacto, junto al número.
   - Clic en el nombre de una canción para abrirla en Spotify. Artistas, álbumes y sellos también son enlaces, pero abren una **búsqueda** en Spotify: el CSV de Exportify trae el ID de la canción y no el de los artistas, álbumes ni sellos.
   - El interruptor «Abrir en Spotify» de la barra de herramientas activa o desactiva todos esos enlaces (se recuerda entre visitas).
   - Con una playlist abierta, arriba aparece el enlace al GitHub del autor.

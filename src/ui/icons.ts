@@ -51,3 +51,15 @@ export function spotifyMark(size = 20): SVGSVGElement {
     '<path d="M6.8 15.5c2.9-.8 5.8-.5 8.3 1" stroke-width="1.5"/></g></svg>';
   return template.content.firstElementChild as SVGSVGElement;
 }
+
+const STAR = 'M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z';
+
+/** Cinco estrellas pegadas, de color currentColor: sirven de fondo y de relleno de la puntuación. */
+export function starsRow(height = 14): SVGSVGElement {
+  const paths = Array.from({ length: 5 }, (_, i) => `<path transform="translate(${i * 24} 0)" d="${STAR}"/>`).join('');
+  const template = document.createElement('template');
+  template.innerHTML =
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 24" width="${height * 5}" height="${height}" ` +
+    `fill="currentColor" aria-hidden="true" focusable="false">${paths}</svg>`;
+  return template.content.firstElementChild as SVGSVGElement;
+}

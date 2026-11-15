@@ -244,7 +244,7 @@ function facetSection(ctx: Ctx, def: FacetDef, open: boolean): Section | null {
   const option = (value: string, checked: boolean): HTMLElement => {
     const input = h('input', { type: 'checkbox', checked, onchange: () => toggle(value, input.checked) });
     const count = h('span', { class: 'opt__count' });
-    const row = h('label', { class: 'opt' }, input, h('span', { class: 'opt__name', title: value }, value), count);
+    const row = h('label', { class: 'opt' }, input, count, h('span', { class: 'opt__name', title: value }, value));
     items.set(value, { input, count, row });
     return row;
   };

@@ -199,6 +199,7 @@ input[type='checkbox']:disabled {
 
 .opts {
   display: grid;
+  grid-template-columns: minmax(0, 1fr); /* sin esto, un nombre largo ensancha la columna y obliga a scrollear de costado */
   max-height: 240px;
   overflow: auto;
 }
@@ -226,6 +227,9 @@ input[type='checkbox']:disabled {
 }
 
 .opt__count {
+  flex: none;
+  min-width: 4ch;
+  text-align: right;
   color: var(--text-3);
   font-size: 12px;
   font-variant-numeric: tabular-nums;

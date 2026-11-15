@@ -1,6 +1,8 @@
 import type { PercentField, Track } from '../types';
 import { albumUrl, artistUrl, labelUrl } from './spotify';
 import {
+  DURATION_LABELS,
+  durationClass,
   fmtNumber,
   formatAddedAt,
   formatDuration,
@@ -16,7 +18,7 @@ export interface CellLink {
   readonly url: string | null;
 }
 
-export type ColumnKind = 'index' | 'title' | 'text' | 'num' | 'bar' | 'chips';
+export type ColumnKind = 'index' | 'title' | 'text' | 'num' | 'bar' | 'stars' | 'chips';
 
 export interface Column {
   key: string;
@@ -42,8 +44,10 @@ export interface Column {
   exportValue(t: Track): string | number;
   /** Etiquetas individuales (solo kind "chips"). */
   items?(t: Track): string[];
-  /** Relleno de la barra, de 0 a 1 (solo kind "bar"). */
+  /** Relleno de la barra o de las estrellas, de 0 a 1 (kind "bar" y "stars"). */
   bar?(t: Track): number | null;
+  /** Etiqueta chica junto al valor (solo kind "num"), con la clase para darle estilo. */
+  tag?(t: Track): { label: string; tone: string } | null;
 }
 
 /** Texto de las celdas sin valor real en las columnas de popularidad y de audio. */
@@ -130,12 +134,17 @@ export const COLUMNS: readonly Column[] = [
     key: 'duration',
     label: 'Duración',
     kind: 'num',
-    width: 130,
+    width: 150,
     defaultVisible: true,
     defaultDir: 'desc',
     text: (t) => (t.durationMs === null ? '' : formatDuration(t.durationMs)),
     sortValue: (t) => t.durationMs,
     exportValue: (t) => t.durationMs ?? '',
+    tag: (t) => {
+      if (t.durationMs === null) return null;
+      const cls = durationClass(t.durationMs);
+      return { label: DURATION_LABELS[cls], tone: cls };
+    },
   },
   {
     key: 'genres',
@@ -152,7 +161,7 @@ export const COLUMNS: readonly Column[] = [
   {
     key: 'popularity',
     label: 'Popularidad',
-    kind: 'bar',
+    kind: 'stars',
     width: 160,
     defaultVisible: true,
     unknown: UNKNOWN_POPULARITY,
