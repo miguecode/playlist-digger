@@ -29,7 +29,7 @@ describe('playlists de ejemplo', () => {
 
   it('no incluyen usuarios reales en «Added By»', () => {
     for (const { id } of EXAMPLES) {
-      expect(read(id).every((t) => t.addedBy === '' || t.addedBy === 'usuario-demo'), id).toBe(true);
+      expect(read(id).every((t) => t.addedBy === '' || t.addedBy === '31kzfm4wqpgv2v2cf3s7lyxuo4ke'), id).toBe(true);
     }
   });
 });

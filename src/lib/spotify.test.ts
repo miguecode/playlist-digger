@@ -57,10 +57,12 @@ describe('likelyOwner', () => {
   it('quita el prefijo spotify:user:', () => {
     expect(likelyOwner(['spotify:user:migue', 'spotify:user:migue'])).toBe('migue');
   });
-  it('ignora IDs opacos y vacíos', () => {
-    expect(likelyOwner(['31ab2cd3ef4gh5ij6kl7mn8op9qr'])).toBeNull();
+  it('sin datos (playlists de Spotify) → null', () => {
     expect(likelyOwner(['', ''])).toBeNull();
     expect(likelyOwner([])).toBeNull();
+  });
+  it('acepta el ID largo que Exportify da para algunas cuentas', () => {
+    expect(likelyOwner(['31kzfm4wqpgv2v2cf3s7lyxuo4ke'])).toBe('31kzfm4wqpgv2v2cf3s7lyxuo4ke');
   });
   it('un usuario corto con números sigue valiendo', () => {
     expect(likelyOwner(['migue123'])).toBe('migue123');

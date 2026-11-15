@@ -30,8 +30,7 @@ export const labelUrl = (label: string): string | null => {
 
 /**
  * Quien más canciones agregó: es lo más probable que sea el dueño de la playlist (no hay certeza en las colaborativas).
- * Devuelve null si no hay datos o si el valor parece un ID opaco (p. ej. «31abc…» de 24+ caracteres con números),
- * que no sirve para buscar porque Spotify no lo conoce como texto.
+ * Devuelve null si nadie figura (p. ej. las playlists de Spotify no traen «Agregado por»).
  */
 export function likelyOwner(addedBy: readonly string[]): string | null {
   const counts = new Map<string, number>();
@@ -47,7 +46,7 @@ export function likelyOwner(addedBy: readonly string[]): string | null {
       max = n;
     }
   }
-  return best && !/^(?=.*\d)[a-z0-9]{24,}$/i.test(best) ? best : null;
+  return best;
 }
 
 /** Búsqueda de playlists por nombre (+ dueño probable). El CSV no trae el ID de la playlist. */
