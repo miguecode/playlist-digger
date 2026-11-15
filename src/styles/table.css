@@ -179,6 +179,17 @@ a.cell-title:hover {
   color: var(--text-2);
 }
 
+/* Artistas, álbum y sello: se leen como texto y se subrayan al pasar el mouse */
+.cell-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.cell-link:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
 .row:hover .cell-text,
 .row:hover .cell-index {
   color: var(--text);

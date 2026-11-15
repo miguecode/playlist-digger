@@ -1,4 +1,5 @@
 import type { PercentField, Track } from '../types';
+import { albumUrl, artistUrl, labelUrl } from './spotify';
 import {
   fmtNumber,
   formatAddedAt,
@@ -9,6 +10,12 @@ import {
 } from './format';
 
 /** Cómo se dibuja la celda. */
+/** Un texto de la celda y adónde lleva (null: sin enlace). */
+export interface CellLink {
+  readonly text: string;
+  readonly url: string | null;
+}
+
 export type ColumnKind = 'index' | 'title' | 'text' | 'num' | 'bar' | 'chips';
 
 export interface Column {
@@ -18,6 +25,8 @@ export interface Column {
   /** Ancho en px. */
   width: number;
   defaultVisible: boolean;
+  /** Enlaces a Spotify de lo que muestra la celda (un artista por enlace). Si falta, la celda no es un enlace. */
+  links?: (t: Track) => readonly CellLink[];
   /**
    * Texto para las celdas sin valor real (p. ej. «Sin dato»). Solo lo llevan las columnas que Exportify
    * siempre incluye pero Spotify a veces no completa: se ofrecen igual y dicen que no hay dato.
@@ -92,6 +101,7 @@ export const COLUMNS: readonly Column[] = [
     text: (t) => t.artists.join(', '),
     sortValue: (t) => t.artists.join(', '),
     exportValue: (t) => t.artists.join('; '),
+    links: (t) => t.artists.map((name) => ({ text: name, url: artistUrl(name) })),
   },
   {
     key: 'album',
@@ -103,6 +113,7 @@ export const COLUMNS: readonly Column[] = [
     text: (t) => t.album,
     sortValue: (t) => t.album,
     exportValue: (t) => t.album,
+    links: (t) => (t.album ? [{ text: t.album, url: albumUrl(t.album, t.artists[0]) }] : []),
   },
   {
     key: 'release',
@@ -183,6 +194,7 @@ export const COLUMNS: readonly Column[] = [
     text: (t) => t.label,
     sortValue: (t) => t.label,
     exportValue: (t) => t.label,
+    links: (t) => (t.label ? [{ text: t.label, url: labelUrl(t.label) }] : []),
   },
   {
     key: 'tempo',

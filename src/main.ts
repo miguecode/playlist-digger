@@ -24,6 +24,7 @@ import type { Track } from './types';
 import { ColumnsMenu } from './ui/columns-menu';
 import { byId, h } from './ui/dom';
 import { FiltersPanel } from './ui/filters-panel';
+import { infoTip } from './ui/info-tip';
 import { brandMark, icon } from './ui/icons';
 import { VirtualTable } from './ui/table';
 
@@ -104,17 +105,39 @@ byId('link-exportify').prepend(icon('external', 16));
 btnOpen.prepend(icon('upload', 18));
 byId('step-exportify').prepend(icon('external', 16));
 byId('link-github').prepend(icon('github', 16));
+byId('topbar-github').prepend(icon('github', 18));
 btnExport.append(icon('download', 18), h('span', { class: 'btn__label' }, 'Exportar CSV'));
 btnExport.title = 'Descarga las canciones y columnas que ves ahora';
 btnExport.setAttribute('aria-label', 'Exportar CSV');
 
 // ───────────────────────── Componentes ─────────────────────────
 
+const switchWrap = byId('switch-wrap');
+const SWITCH_HELP =
+  'Con el interruptor activado, hacer clic en una canción la abre en Spotify. En artistas, álbumes y sellos abre la búsqueda en Spotify: el CSV no trae sus enlaces directos. Si lo desactivás, nada es un enlace.';
+
+// Interruptor «Abrir en Spotify»: activa o desactiva todos los enlaces de la tabla (se recuerda entre visitas)
+const LINKS_KEY = 'playlist-viewer:spotify-links';
+const switchLinks = byId<HTMLButtonElement>('switch-links');
+let linksOn = loadJson<unknown>(LINKS_KEY) !== false;
+
+function applyLinks(on: boolean): void {
+  linksOn = on;
+  switchLinks.setAttribute('aria-checked', String(on));
+  table.setLinks(on);
+}
+
 const table = new VirtualTable((col) => {
   app.sort = nextSort(app.sort, col);
   update(true);
 });
 tableHost.append(table.element);
+applyLinks(linksOn);
+switchLinks.addEventListener('click', () => {
+  applyLinks(!linksOn);
+  saveJson(LINKS_KEY, linksOn);
+});
+switchWrap.append(infoTip('Abrir en Spotify', SWITCH_HELP));
 
 const panel = new FiltersPanel(byId('filters-body'), (next) => {
   app.filters = next;

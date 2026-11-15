@@ -46,6 +46,8 @@ export class VirtualTable {
   private stickyEdge = '';
   /** Huella de lo que dibuja el encabezado (columnas + orden). */
   private headKey = '';
+  /** Si es true, canción, artistas, álbum y sello son enlaces a Spotify. */
+  private linksOn = true;
 
   private start = -1;
   private end = -1;
@@ -89,6 +91,13 @@ export class VirtualTable {
     }
     if (resetScroll) this.scroller.scrollTop = 0;
     this.render(true);
+  }
+
+  /** Activa o desactiva los enlaces a Spotify y vuelve a dibujar las filas visibles. */
+  setLinks(on: boolean): void {
+    if (this.linksOn === on) return;
+    this.linksOn = on;
+    if (this.rows.length > 0) this.render(true);
   }
 
   private computeSticky(): void {
@@ -186,6 +195,32 @@ export class VirtualTable {
     return row;
   }
 
+  /** Celda de texto con enlaces a Spotify (uno por artista); null si no corresponde. */
+  private renderLinked(col: Column, track: Track): Node | null {
+    const items = this.linksOn ? (col.links?.(track) ?? []) : [];
+    if (!items.some((item) => item.url)) return null;
+    const nodes: Node[] = [];
+    items.forEach((item, i) => {
+      if (i > 0) nodes.push(document.createTextNode(', '));
+      nodes.push(
+        item.url
+          ? h(
+              'a',
+              {
+                class: 'cell-link',
+                href: item.url,
+                target: '_blank',
+                rel: 'noopener noreferrer',
+                title: `Buscar «${item.text}» en Spotify`,
+              },
+              highlight(item.text, this.terms),
+            )
+          : highlight(item.text, this.terms),
+      );
+    });
+    return h('span', { class: 'cell-text' }, ...nodes);
+  }
+
   private renderCell(col: Column, track: Track): Node {
     const text = cellText(col, track);
     if (text === '' && col.kind !== 'index') {
@@ -199,7 +234,7 @@ export class VirtualTable {
         return h('span', { class: 'cell-index' }, highlight(text, this.terms));
 
       case 'title': {
-        const url = trackUrl(track);
+        const url = this.linksOn ? trackUrl(track) : null;
         const content = highlight(text, this.terms);
         const title = url
           ? h(
@@ -241,7 +276,7 @@ export class VirtualTable {
         );
 
       default:
-        return h('span', { class: 'cell-text', title: text }, highlight(text, this.terms));
+        return this.renderLinked(col, track) ?? h('span', { class: 'cell-text', title: text }, highlight(text, this.terms));
     }
   }
 }
