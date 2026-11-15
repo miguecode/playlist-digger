@@ -6,6 +6,7 @@ import { trackUrl } from '../lib/spotify';
 import type { Track } from '../types';
 import { h, highlight } from './dom';
 import { icon } from './icons';
+import { fitChips } from './chips';
 import { bindTip, hideInfoTip, infoTip } from './info-tip';
 
 const ROW_H = 52;
@@ -172,6 +173,7 @@ export class VirtualTable {
       if (track) fragment.append(this.renderRow(track, i));
     }
     this.rowsEl.replaceChildren(fragment);
+    fitChips(this.rowsEl);
   }
 
   private renderRow(track: Track, index: number): HTMLElement {
@@ -232,7 +234,7 @@ export class VirtualTable {
       case 'chips':
         return h(
           'div',
-          { class: 'chips', title: text },
+          { class: 'chips', 'data-label': col.label },
           ...(col.items?.(track) ?? []).map((item) =>
             h('span', { class: 'chip' }, highlight(item, this.terms)),
           ),

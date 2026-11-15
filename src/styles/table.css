@@ -230,22 +230,47 @@ a.cell-title:hover {
 
 .chips {
   display: flex;
-  gap: 6px;
+  gap: 6px; /* si cambia, actualizar GAP en ui/chips.ts */
+  width: 100%;
+  min-width: 0;
   overflow: hidden;
 }
 
 .chip {
   flex: none;
+  max-width: 100%;
+  overflow: hidden;
   padding: 3px 10px;
   border-radius: 500px;
   background: var(--field);
   color: #d0d0d0;
   font-size: 12px;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .row:hover .chip {
   background: #3a3a3a;
+}
+
+/* «+N»: etiquetas que no entran; al pasar el mouse muestra todas */
+.chip--more {
+  padding: 3px 8px;
+  border: 0;
+  color: var(--text);
+  font-weight: 700;
+  cursor: help;
+}
+
+.row:hover .chip--more,
+.chip--more:hover,
+.chip--more[aria-expanded='true'] {
+  background: #4d4d4d;
+}
+
+.chip--more.is-match {
+  background: var(--green);
+  color: #000;
 }
 
 .unknown {
