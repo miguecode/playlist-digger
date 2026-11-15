@@ -459,10 +459,25 @@ const historyMenu = new HistoryMenu(byId('history-host'), {
   clearAll: () => clearAllHistory(),
 });
 
+/** En la landing se ven las más recientes; el resto, con «Ver todas». */
+const HISTORY_LANDING_LIMIT = 6;
+let historyExpanded = false;
+const historyMore = byId('history-more');
+historyMore.addEventListener('click', () => {
+  historyExpanded = !historyExpanded;
+  renderHistory();
+});
+
 function renderHistory(): void {
   const now = Date.now();
   historySection.hidden = history.length === 0;
-  historyList.replaceChildren(...history.map((entry) => historyCard(entry, historyHandlers, now)));
+  const hasMore = history.length > HISTORY_LANDING_LIMIT;
+  if (!hasMore) historyExpanded = false;
+  const visible = historyExpanded ? history : history.slice(0, HISTORY_LANDING_LIMIT);
+  historyList.replaceChildren(...visible.map((entry) => historyCard(entry, historyHandlers, now)));
+  historyMore.hidden = !hasMore;
+  historyMore.textContent = historyExpanded ? 'Ver menos' : `Ver todas (${history.length})`;
+  historyMore.setAttribute('aria-expanded', String(historyExpanded));
   historyMenu.setEntries(history, currentHistoryId, now);
 }
 

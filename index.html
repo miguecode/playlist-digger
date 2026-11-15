@@ -45,6 +45,7 @@
       <main class="main">
         <!-- Pantalla inicial: zona para soltar el CSV -->
         <section class="welcome" id="welcome">
+          <div class="welcome__scroll">
           <div class="welcome__inner">
             <header class="welcome__head">
               <h1 class="welcome__title">Explorá tu playlist</h1>
@@ -122,6 +123,7 @@
                 <button class="btn btn--text history__clear" id="clear-history-landing" type="button">Borrar historial</button>
               </p>
               <div class="examples__list" id="history-list"></div>
+              <button class="btn btn--ghost history__more" id="history-more" type="button" aria-controls="history-list" aria-expanded="false" hidden></button>
             </section>
 
             <section class="examples" aria-labelledby="examples-title">
@@ -129,18 +131,19 @@
               <p class="examples__text">Probá la tabla con una playlist de ejemplo, a un clic.</p>
               <div class="examples__list" id="examples-list"></div>
             </section>
-
-            <footer class="legal">
-              <p class="legal__text">
-                Playlist Viewer es un proyecto independiente: no está afiliado, asociado ni respaldado por Spotify.
-                Spotify es una marca registrada de Spotify AB.
-              </p>
-              <p class="legal__links">
-                <a class="legal__link" id="link-github" href="https://github.com/miguecode" target="_blank" rel="noopener noreferrer"><span>Hecho por migue</span></a>
-                <a class="legal__link" id="link-spotify" href="https://open.spotify.com/user/31kzfm4wqpgv2v2cf3s7lyxuo4ke" target="_blank" rel="noopener noreferrer"><span>Mi perfil de Spotify</span></a>
-              </p>
-            </footer>
           </div>
+          </div>
+
+          <footer class="legal">
+            <p class="legal__text">
+              Playlist Viewer es un proyecto independiente: no está afiliado, asociado ni respaldado por Spotify.
+              Spotify es una marca registrada de Spotify AB.
+            </p>
+            <p class="legal__links">
+              <a class="legal__link" id="link-github" href="https://github.com/miguecode" target="_blank" rel="noopener noreferrer"><span>Hecho por migue</span></a>
+              <a class="legal__link" id="link-spotify" href="https://open.spotify.com/user/31kzfm4wqpgv2v2cf3s7lyxuo4ke" target="_blank" rel="noopener noreferrer"><span>Mi Spotify</span></a>
+            </p>
+          </footer>
         </section>
 
         <!-- Vista con datos -->

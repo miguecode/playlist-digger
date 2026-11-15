@@ -3,10 +3,19 @@
   flex: 1;
   min-height: 0;
   display: flex;
-  padding: 24px 16px 24px;
+  flex-direction: column;
   border-radius: var(--radius);
   background:
     linear-gradient(180deg, rgba(30, 215, 96, 0.18) 0, rgba(18, 18, 18, 0) 320px), var(--bg);
+  overflow: hidden;
+}
+
+/* Lo único que scrollea es el contenido; el aviso legal queda siempre a la vista abajo. */
+.welcome__scroll {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  padding: 24px 16px;
   overflow: auto;
 }
 
@@ -404,28 +413,33 @@
 
 /* Aviso legal y enlaces */
 .legal {
-  display: grid;
-  justify-items: center;
-  gap: 8px;
-  padding-top: 8px;
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 24px;
+  padding: 10px 24px;
   border-top: 1px solid var(--line);
+  background: var(--bg);
   color: var(--text-3);
   font-size: 12px;
-  text-align: center;
 }
 
 .legal p {
   margin: 0;
-  max-width: 560px;
   text-wrap: pretty;
+}
+
+.history__more {
+  margin-top: 12px;
 }
 
 .legal__links {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  gap: 8px 16px;
 }
 
 .legal__link {
@@ -443,6 +457,11 @@
 }
 
 @media (max-width: 860px) {
+  .legal {
+    justify-content: center;
+    text-align: center;
+  }
+
   .steps {
     grid-template-columns: minmax(0, 1fr);
     max-width: 440px;
