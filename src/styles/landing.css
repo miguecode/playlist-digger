@@ -388,9 +388,12 @@
 }
 
 .hcard__remove {
+  /* Pegada a la esquina para no tapar el botón verde de reproducir. */
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 3px;
+  right: 3px;
+  width: 22px;
+  height: 22px;
   opacity: 0;
   background: rgba(0, 0, 0, 0.55);
   transition: opacity 0.15s ease;

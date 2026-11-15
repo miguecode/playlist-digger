@@ -39,7 +39,7 @@ export function historyCard(entry: HistoryEntry, handlers: HistoryHandlers, now:
       title: 'Quitar del historial',
       onclick: () => handlers.remove(entry),
     },
-    icon('close', 16),
+    icon('close', 12),
   );
   return h('div', { class: 'hcard' }, open, remove);
 }
