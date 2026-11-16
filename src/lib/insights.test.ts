@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   computeInsights,
+  computeAddedByMonth,
   computeTonality,
+  normalizeBpm,
   genreFlavor,
   danceVerdict,
   tempoBuckets,
@@ -48,8 +50,8 @@ describe('computeInsights', () => {
   });
   it('ignora un BPM de 0 y marca la más rápida y la más lenta', () => {
     expect(r.tempo).toMatchObject({ average: 120, min: 100, max: 140 });
-    expect(r.tempo?.fastest).toEqual({ name: 'B', artist: 'Eminem', value: 140 });
-    expect(r.tempo?.slowest).toEqual({ name: 'A', artist: 'Eminem', value: 100 });
+    expect(r.tempo?.fastest).toMatchObject({ name: 'B', artist: 'Eminem', value: 140 });
+    expect(r.tempo?.slowest).toMatchObject({ name: 'A', artist: 'Eminem', value: 100 });
   });
   it('arma el ranking de canciones más populares', () => {
     expect(r.topSongs.map((s) => [s.name, s.value])).toEqual([['A', 80], ['C', 70], ['B', 60]]);
@@ -154,5 +156,70 @@ describe('género dominante', () => {
   it('queda en el audio del resumen', () => {
     const r = computeInsights([t({ genres: ['rap'], energy: 0.7, valence: 0.3, danceability: 0.6 })]);
     expect(r.audio?.genre?.name).toBe('rap');
+  });
+});
+
+describe('normalizeBpm', () => {
+  it('corrige solo los casos casi seguros (al doble o a la mitad)', () => {
+    expect(normalizeBpm(200)).toEqual({ value: 100, adjusted: true });
+    expect(normalizeBpm(45)).toEqual({ value: 90, adjusted: true });
+  });
+  it('no toca los valores plausibles, aunque sean rápidos o lentos', () => {
+    expect(normalizeBpm(178)).toEqual({ value: 178, adjusted: false });
+    expect(normalizeBpm(72)).toEqual({ value: 72, adjusted: false });
+  });
+  it('no corrige si el resultado quedaría fuera de rango', () => {
+    expect(normalizeBpm(25)).toEqual({ value: 25, adjusted: false });
+  });
+  it('el resumen usa el BPM corregido y avisa cuántos ajustó', () => {
+    const r = computeInsights([t({ tempo: 200, name: 'Rápida' }), t({ tempo: 100 })]);
+    expect(r.tempo?.average).toBe(100);
+    expect(r.tempo?.adjusted).toBe(1);
+    expect(r.tempo?.fastest).toMatchObject({ name: 'Rápida', value: 100, adjusted: true });
+  });
+});
+
+describe('agregadas por mes y colaboradores', () => {
+  const at = (iso: string) => Date.parse(iso);
+  it('cuenta por mes, resalta el que más y respeta el orden', () => {
+    const r = computeAddedByMonth([
+      t({ addedAt: at('2026-01-15T12:00:00') }),
+      t({ addedAt: at('2026-03-10T12:00:00') }),
+      t({ addedAt: at('2026-03-20T12:00:00') }),
+    ]);
+    expect(r?.list.map((m) => [m.label, m.count])).toEqual([['ene', 1], ['feb', 0], ['mar', 2]]);
+    expect(r?.top).toMatchObject({ label: 'mar', count: 2 });
+  });
+  it('se queda con los últimos meses y avisa cuántos quedaron afuera', () => {
+    const tracks = Array.from({ length: 14 }, (_, i) => t({ addedAt: new Date(2025, i, 10, 12).getTime() }));
+    const r = computeAddedByMonth(tracks);
+    expect(r?.list).toHaveLength(12);
+    expect(r?.hidden).toBe(2);
+  });
+  it('con un solo mes (o sin fechas) no hay gráfico', () => {
+    expect(computeAddedByMonth([t({ addedAt: at('2026-01-15T12:00:00') })])).toBeNull();
+    expect(computeAddedByMonth([t({})])).toBeNull();
+  });
+  it('los colaboradores aparecen solo con más de 2 personas', () => {
+    expect(computeInsights([t({ addedBy: 'a' }), t({ addedBy: 'b' })]).adders).toBeNull();
+    const r = computeInsights([t({ addedBy: 'a' }), t({ addedBy: 'a' }), t({ addedBy: 'b' }), t({ addedBy: 'c' })]);
+    expect(r.adders?.[0]).toEqual({ name: 'a', count: 2 });
+  });
+});
+
+describe('destacadas', () => {
+  it('elige la más bailable, acústica, enérgica y alegre (en porcentaje)', () => {
+    const r = computeInsights([
+      t({ name: 'A', danceability: 0.9, acousticness: 0.1, energy: 0.2, valence: 0.3 }),
+      t({ name: 'B', danceability: 0.5, acousticness: 0.8, energy: 0.9, valence: 0.7 }),
+    ]);
+    const by = Object.fromEntries(r.highlights.map((h) => [h.id, h.song]));
+    expect(by.danceable).toMatchObject({ name: 'A', value: 90 });
+    expect(by.acoustic).toMatchObject({ name: 'B', value: 80 });
+    expect(by.energetic?.name).toBe('B');
+    expect(by.happy?.name).toBe('B');
+  });
+  it('no inventa destacadas si el valor es 0 o falta', () => {
+    expect(computeInsights([t({ acousticness: 0 }), t({})]).highlights).toEqual([]);
   });
 });

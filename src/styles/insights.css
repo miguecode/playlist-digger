@@ -195,7 +195,7 @@
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  opacity: 0.85;
+  opacity: 0.88;
 }
 
 .ins-hero__title {
@@ -227,7 +227,7 @@
 
 .ins-stat__label {
   font-size: 13px;
-  opacity: 0.85;
+  opacity: 0.88;
 }
 
 .ins-tags {
@@ -280,7 +280,7 @@
 }
 
 .ins-card--green {
-  background: linear-gradient(150deg, #0b5a31, #118246);
+  background: linear-gradient(150deg, #0b5a31, #107941);
 }
 
 .ins-card--pink {
@@ -292,15 +292,15 @@
 }
 
 .ins-card--blue {
-  background: linear-gradient(150deg, #0f4a78, #1a6fb3);
+  background: linear-gradient(150deg, #0f4a78, #196daf);
 }
 
 .ins-card--orange {
-  background: linear-gradient(150deg, #7a2f0d, #b34a17);
+  background: linear-gradient(150deg, #7a2f0d, #b14917);
 }
 
 .ins-card--gold {
-  background: linear-gradient(150deg, #6b4f0a, #9c7413);
+  background: linear-gradient(150deg, #6b4f0a, #866410);
 }
 
 .ins-card__title {
@@ -309,14 +309,14 @@
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  opacity: 0.85;
+  opacity: 0.88;
 }
 
 .ins-caption,
 .ins-note {
   margin: 0;
   font-size: 12px;
-  opacity: 0.75;
+  opacity: 0.88;
 }
 
 .ins-big {
@@ -334,7 +334,7 @@
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0;
-  opacity: 0.8;
+  opacity: 0.88;
 }
 
 .ins-verdict {
@@ -381,7 +381,7 @@
 .ins-song__meta {
   overflow: hidden;
   font-size: 13px;
-  opacity: 0.8;
+  opacity: 0.88;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -411,7 +411,7 @@
 .rank__pos {
   font-size: 18px;
   font-weight: 900;
-  opacity: 0.7;
+  opacity: 0.88;
   text-align: center;
 }
 
@@ -433,7 +433,7 @@
   margin-top: -3px;
   overflow: hidden;
   font-size: 12px;
-  opacity: 0.75;
+  opacity: 0.88;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -671,12 +671,55 @@
   gap: 6px;
 }
 
+.ins--slides .ins-card:not(.ins-card--fill) {
+  align-content: center;
+}
+
+.ins--slides .ins-highlight {
+  gap: 4px;
+}
+
+.ins--slides .ins-highlight .ins-song__name {
+  font-size: 22px;
+}
+
+.ins--slides .ins-card:has(.ins-highlight) {
+  gap: 26px;
+}
+
 .ins-slide {
   animation: none;
 }
 
 .ins-hero .ins-note {
   margin-top: 22px;
+}
+
+.ins__grid > .ins-card--wide {
+  grid-column: 1 / -1;
+}
+
+.rank--roomy {
+  gap: 18px;
+}
+
+.ins--slides .rank--roomy {
+  gap: 14px;
+}
+
+.ins-highlight {
+  display: grid;
+  gap: 2px;
+}
+
+.hist__label small {
+  display: block;
+  min-height: 11px;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 11px;
+  opacity: 0.88;
+  text-align: center;
 }
 
 /* Vibra: género dominante y tonalidad */

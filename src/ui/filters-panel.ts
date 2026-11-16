@@ -15,7 +15,7 @@ import {
   type RangeDef,
   type RangeKey,
 } from '../lib/filters';
-import { fmtNumber } from '../lib/format';
+import { displayGenre, fmtNumber } from '../lib/format';
 import { filterHelp } from '../lib/help';
 import { fold } from '../lib/text';
 import type { Track } from '../types';
@@ -47,17 +47,29 @@ function makeSection(title: string, open: boolean, help: string | undefined, ...
   const badge = h('span', { class: 'fsec__badge', hidden: true });
   const chevron = icon('chevron', 18);
   chevron.classList.add('fsec__chev');
+  const titleEl = h('span', { class: 'fsec__title' }, title);
+  // El botón ⓘ no puede ir dentro del <summary> (un control dentro de otro rompe lectores de pantalla):
+  // va al lado y se coloca justo después del título.
+  const info = help ? infoTip(title, help) : null;
+  if (info) {
+    info.classList.add('fsec__info');
+    const place = (): void => {
+      info.style.left = `${titleEl.offsetLeft + titleEl.offsetWidth + 6}px`;
+    };
+    place();
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(place).observe(titleEl);
+  }
+  // El ⓘ queda fuera del <details>: si no, desaparecería con la sección plegada.
   const el = h(
-    'details',
-    { class: 'fsec', open },
+    'div',
+    { class: 'fsec' },
     h(
-      'summary',
-      { class: 'fsec__head' },
-      h('span', { class: 'fsec__heading' }, h('span', { class: 'fsec__title' }, title), help ? infoTip(title, help) : null),
-      badge,
-      chevron,
+      'details',
+      { class: 'fsec__details', open },
+      h('summary', { class: 'fsec__head' }, h('span', { class: 'fsec__heading' }, titleEl), badge, chevron),
+      h('div', { class: 'fsec__body' }, ...body),
     ),
-    h('div', { class: 'fsec__body' }, ...body),
+    info,
   );
   const setCount = (n: number): void => {
     badge.hidden = n === 0;
@@ -246,7 +258,9 @@ function facetSection(ctx: Ctx, def: FacetDef, open: boolean): Section | null {
   const option = (value: string, checked: boolean): HTMLElement => {
     const input = h('input', { type: 'checkbox', checked, onchange: () => toggle(value, input.checked) });
     const count = h('span', { class: 'opt__count' });
-    const row = h('label', { class: 'opt' }, input, count, h('span', { class: 'opt__name', title: value }, value));
+    // Solo cambia lo que se ve: el valor filtrado sigue siendo el original del CSV.
+    const shown = def.key === 'genre' ? displayGenre(value) : value;
+    const row = h('label', { class: 'opt' }, input, count, h('span', { class: 'opt__name', title: shown }, shown));
     items.set(value, { input, count, row });
     return row;
   };

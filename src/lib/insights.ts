@@ -14,6 +14,8 @@ export interface TrackRef {
   name: string;
   artist: string;
   value: number;
+  /** Solo para el BPM: el valor se corrigió porque parecía contado al doble o a la mitad. */
+  adjusted?: boolean;
 }
 
 /** Título corto + frase para mostrar en las tarjetas del resumen. */
@@ -26,6 +28,20 @@ export interface Decade {
   decade: number;
   label: string;
   count: number;
+}
+
+export interface Highlight {
+  id: 'danceable' | 'acoustic' | 'energetic' | 'happy';
+  title: string;
+  song: TrackRef;
+}
+
+export interface AddedByMonth {
+  /** Del mes más viejo al más nuevo (máximo 12, los últimos). */
+  list: { label: string; year: string; count: number }[];
+  top: { label: string; year: string; count: number };
+  /** Cuántos meses con datos quedaron afuera por antigüedad. */
+  hidden: number;
 }
 
 export interface GenreFlavor {
@@ -77,8 +93,16 @@ export interface Insights {
   } | null;
   /** Las canciones más populares (hasta 10). */
   topSongs: TrackRef[];
+  /** Canciones que más se destacan en un rasgo de audio (valor en porcentaje); null si no hay datos. */
+  highlights: Highlight[];
+  /** Quiénes agregaron más canciones; solo si hubo más de 2 colaboradores. */
+  adders: Ranked[] | null;
+  /** Cuántas canciones se agregaron en cada mes; null si hay menos de 2 meses con datos. */
+  addedByMonth: AddedByMonth | null;
   tempo: {
     average: number;
+    /** Cuántas canciones tenían un BPM dudoso (al doble o a la mitad) y se corrigieron. */
+    adjusted: number;
     min: number;
     max: number;
     fastest: TrackRef;
@@ -235,6 +259,40 @@ export function tempoBuckets(bpms: readonly number[]): { label: string; count: n
   return buckets;
 }
 
+/**
+ * Spotify a veces estima el BPM al doble o a la mitad. Solo se corrigen los casos casi seguros:
+ * más de 190 se lleva a la mitad y menos de 60 al doble (siempre que el resultado quede entre 60 y 190).
+ * Un tema de 178 BPM puede ser real, así que no se toca.
+ */
+export function normalizeBpm(bpm: number): { value: number; adjusted: boolean } {
+  if (bpm > 190 && bpm / 2 >= 60) return { value: bpm / 2, adjusted: true };
+  if (bpm < 60 && bpm * 2 >= 60 && bpm * 2 <= 190) return { value: bpm * 2, adjusted: true };
+  return { value: bpm, adjusted: false };
+}
+
+const MONTH_NAMES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'] as const;
+
+/** Meses en los que se agregaron canciones (usa el día local de cada canción). */
+export function computeAddedByMonth(tracks: readonly Track[], maxMonths = 12): AddedByMonth | null {
+  const counts = new Map<number, number>();
+  for (const t of tracks) {
+    if (t.addedAt === null) continue;
+    const d = new Date(t.addedAt);
+    const index = d.getFullYear() * 12 + d.getMonth();
+    counts.set(index, (counts.get(index) ?? 0) + 1);
+  }
+  if (counts.size < 2) return null;
+  const first = Math.min(...counts.keys());
+  const last = Math.max(...counts.keys());
+  const all: AddedByMonth['list'] = [];
+  for (let i = first; i <= last; i++) {
+    all.push({ label: MONTH_NAMES[i % 12] ?? '', year: String(Math.floor(i / 12)), count: counts.get(i) ?? 0 });
+  }
+  const top = all.reduce((best, m) => (m.count > best.count ? m : best), all[0] as AddedByMonth['list'][number]);
+  const list = all.slice(-maxMonths);
+  return { list, top, hidden: Math.max(0, all.length - list.length) };
+}
+
 const yearOf = (t: Track): number | null => (t.releaseDate ? Number(t.releaseDate.slice(0, 4)) : null);
 
 export function computeInsights(tracks: readonly Track[]): Insights {
@@ -301,23 +359,46 @@ export function computeInsights(tracks: readonly Track[]): Insights {
           tonality,
         };
 
-  // Tempo (un BPM de 0 es un dato faltante)
-  const bpms = tracks.map((t) => t.tempo).filter((v): v is number => v !== null && v > 0);
-  const bpmAverage = mean(bpms);
-  const fastest = extreme(tracks, (t) => (t.tempo && t.tempo > 0 ? t.tempo : null), 'max');
-  const slowest = extreme(tracks, (t) => (t.tempo && t.tempo > 0 ? t.tempo : null), 'min');
+  // Tempo (un BPM de 0 es un dato faltante; los BPM que parecen al doble o a la mitad se corrigen)
+  const fixedBpm = (t: Track): { value: number; adjusted: boolean } | null => (t.tempo && t.tempo > 0 ? normalizeBpm(t.tempo) : null);
+  const bpms = tracks.map(fixedBpm).filter((v): v is { value: number; adjusted: boolean } => v !== null);
+  const bpmAverage = mean(bpms.map((b) => b.value));
+  const bpmValue = (t: Track): number | null => fixedBpm(t)?.value ?? null;
+  const fastest = extreme(tracks, bpmValue, 'max');
+  const slowest = extreme(tracks, bpmValue, 'min');
+  const wasAdjusted = (r: TrackRef): boolean => tracks.some((t) => t.name === r.name && fixedBpm(t)?.adjusted === true && fixedBpm(t)?.value === r.value);
   const tempo =
     bpmAverage === null || !fastest || !slowest
       ? null
       : {
           average: Math.round(bpmAverage),
-          min: Math.round(Math.min(...bpms)),
-          max: Math.round(Math.max(...bpms)),
-          fastest: { ...fastest, value: Math.round(fastest.value) },
-          slowest: { ...slowest, value: Math.round(slowest.value) },
-          buckets: tempoBuckets(bpms),
+          adjusted: bpms.filter((b) => b.adjusted).length,
+          min: Math.round(Math.min(...bpms.map((b) => b.value))),
+          max: Math.round(Math.max(...bpms.map((b) => b.value))),
+          fastest: { ...fastest, value: Math.round(fastest.value), adjusted: wasAdjusted(fastest) },
+          slowest: { ...slowest, value: Math.round(slowest.value), adjusted: wasAdjusted(slowest) },
+          buckets: tempoBuckets(bpms.map((b) => b.value)),
           verdict: tempoVerdict(bpmAverage),
         };
+
+  // Destacadas por rasgo de audio
+  const highlightDefs: { id: Highlight['id']; title: string; pick: (t: Track) => number | null }[] = [
+    { id: 'danceable', title: 'La más bailable', pick: (t) => t.danceability },
+    { id: 'acoustic', title: 'La más acústica', pick: (t) => t.acousticness },
+    { id: 'energetic', title: 'La más enérgica', pick: (t) => t.energy },
+    { id: 'happy', title: 'La más alegre', pick: (t) => t.valence },
+  ];
+  const highlights: Highlight[] = [];
+  for (const def of highlightDefs) {
+    const best = extreme(tracks, def.pick, 'max');
+    if (best && best.value > 0) highlights.push({ id: def.id, title: def.title, song: { ...best, value: Math.round(best.value * 100) } });
+  }
+
+  // Colaboradores (solo cuentan si hubo más de 2) y meses en que se agregó
+  const adders = new Map<string, number>();
+  for (const t of tracks) if (t.addedBy) bump(adders, t.addedBy);
+  const addersRanked = adders.size > 2 ? ranked(adders, 5) : null;
+  const addedByMonth = computeAddedByMonth(tracks);
 
   // Duración
   const durations = tracks.map((t) => t.durationMs).filter((v): v is number => v !== null && v > 0);
@@ -374,6 +455,9 @@ export function computeInsights(tracks: readonly Track[]): Insights {
     popularity,
     topSongs,
     audio,
+    highlights,
+    adders: addersRanked,
+    addedByMonth,
     tempo,
     duration,
     decades,

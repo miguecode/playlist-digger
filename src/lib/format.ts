@@ -118,3 +118,19 @@ export function timeAgo(timestamp: number, now: number = Date.now()): string {
   if (abs < 86_400 * 365) return rtf.format(Math.round(seconds / (86_400 * 30)), 'month');
   return rtf.format(Math.round(seconds / (86_400 * 365)), 'year');
 }
+
+/** Siglas que no deben quedar como «Edm» o «R&b» al poner la mayúscula inicial. */
+const GENRE_ACRONYMS: readonly [RegExp, string][] = [
+  [/\br&b\b/gi, 'R&B'],
+  [/\bedm\b/gi, 'EDM'],
+  [/\bk-pop\b/gi, 'K-pop'],
+  [/\bj-pop\b/gi, 'J-pop'],
+  [/\buk\b/gi, 'UK'],
+  [/\bmpb\b/gi, 'MPB'],
+];
+
+/** Género tal como se muestra: mayúscula inicial y siglas en mayúsculas. Los datos originales no se tocan. */
+export function displayGenre(genre: string): string {
+  const text = GENRE_ACRONYMS.reduce((out, [pattern, replacement]) => out.replace(pattern, replacement), genre.trim());
+  return text.charAt(0).toLocaleUpperCase('es') + text.slice(1);
+}

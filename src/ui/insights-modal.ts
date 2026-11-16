@@ -1,8 +1,9 @@
-import { DURATION_LABELS, fmtNumber, formatDuration, formatTotalDuration, type DurationClass } from '../lib/format';
+import { DURATION_LABELS, displayGenre, fmtNumber, formatDuration, formatTotalDuration, type DurationClass } from '../lib/format';
 import { computeInsights, type Insights, type Ranked, type TrackRef, type Verdict } from '../lib/insights';
 import type { Track } from '../types';
 import { h } from './dom';
 import { icon, starsRow } from './icons';
+import { play } from './motion';
 import { renderShareImage, shareFileName } from './share-image';
 
 type Accent = 'green' | 'pink' | 'purple' | 'blue' | 'orange' | 'gold';
@@ -27,9 +28,11 @@ const song = (t: TrackRef, value: string): HTMLElement =>
 
 function rankList(items: readonly Ranked[], anim: Animations, scale?: number): HTMLElement {
   const max = scale ?? items[0]?.count ?? 1;
+  // Sin línea de apoyo (artista), las filas quedan bajitas: se separan más para que respiren.
+  const plain = items.every((item) => !item.detail);
   return h(
     'ol',
-    { class: 'rank' },
+    { class: plain ? 'rank rank--roomy' : 'rank' },
     ...items.map((item, i) => {
       const fill = h('span', { class: 'rank__fill' });
       anim.push(() => {
@@ -78,7 +81,7 @@ function hero(data: Insights, _anim: Animations, name: string): HTMLElement {
   if (data.totalDurationMs > 0) stats.push(stat(formatTotalDuration(data.totalDurationMs), 'de música'));
   if (data.explicitShare !== null && data.explicitShare > 0) stats.push(stat(`${data.explicitShare}%`, 'explícitas'));
   return h(
-    'header',
+    'div',
     { class: 'ins-hero' },
     h('p', { class: 'ins-hero__eyebrow' }, 'Tu playlist en resumen'),
     h('h2', { class: 'ins-hero__title', id: 'ins-title' }, name),
@@ -96,13 +99,21 @@ function artistsCard(data: Insights, anim: Animations): HTMLElement | null {
     h('p', { class: 'ins-caption' }, 'Cantidad de canciones de cada uno'),
     rankList(data.topArtists, anim),
   );
-  el.classList.add('ins-card--fill');
+  // Con pocas filas no se estiran: quedarían muy separadas.
+  if (data.topArtists.length >= 6) el.classList.add('ins-card--fill');
   return el;
 }
 
 function genresCard(data: Insights, anim: Animations): HTMLElement | null {
   if (data.topGenres.length === 0) return null;
-  return card('pink', 'Géneros más repetidos', rankList(data.topGenres, anim));
+  const el = card(
+    'pink',
+    'Géneros más repetidos',
+    h('p', { class: 'ins-caption' }, 'Cantidad de canciones de cada uno'),
+    rankList(data.topGenres.map((g) => ({ ...g, name: displayGenre(g.name) })), anim),
+  );
+  if (data.topGenres.length >= 6) el.classList.add('ins-card--fill');
+  return el;
 }
 
 function albumsCard(data: Insights, anim: Animations): HTMLElement | null {
@@ -195,7 +206,7 @@ function vibeCard(data: Insights, anim: Animations): HTMLElement | null {
       ? h(
           'p',
           { class: 'ins-genre' },
-          h('strong', {}, `Género dominante: ${audio.genre.name}. `),
+          h('strong', {}, `Género dominante: ${displayGenre(audio.genre.name)}. `),
           audio.genre.note,
         )
       : null,
@@ -235,10 +246,71 @@ function tempoCard(data: Insights, anim: Animations): HTMLElement | null {
     h(
       'div',
       { class: 'ins-pair' },
-      h('div', {}, h('p', { class: 'ins-fact' }, 'La más rápida'), song(tempo.fastest, `${tempo.fastest.value} BPM`)),
-      h('div', {}, h('p', { class: 'ins-fact' }, 'La más lenta'), song(tempo.slowest, `${tempo.slowest.value} BPM`)),
+      h('div', {}, h('p', { class: 'ins-fact' }, 'La más rápida'), song(tempo.fastest, `${tempo.fastest.value} BPM${tempo.fastest.adjusted ? ' (ajustado)' : ''}`)),
+      h('div', {}, h('p', { class: 'ins-fact' }, 'La más lenta'), song(tempo.slowest, `${tempo.slowest.value} BPM${tempo.slowest.adjusted ? ' (ajustado)' : ''}`)),
     ),
-    h('p', { class: 'ins-note' }, 'El BPM es una estimación automática: a veces sale al doble o a la mitad.'),
+    h(
+      'p',
+      { class: 'ins-note' },
+      tempo.adjusted > 0
+        ? `El BPM es una estimación automática. Corregimos ${fmtNumber(tempo.adjusted)} ${tempo.adjusted === 1 ? 'canción' : 'canciones'} que parecían contadas al doble o a la mitad.`
+        : 'El BPM es una estimación automática: a veces sale al doble o a la mitad.',
+    ),
+  );
+}
+
+function highlightsCard(data: Insights): HTMLElement | null {
+  if (data.highlights.length === 0) return null;
+  return card(
+    'orange',
+    'Las destacadas',
+    ...data.highlights.map((hl) =>
+      h('div', { class: 'ins-highlight' }, h('p', { class: 'ins-fact' }, hl.title), song(hl.song, `${hl.song.value}%`)),
+    ),
+  );
+}
+
+const MONTHS_LONG = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'] as const;
+const MONTHS_SHORT = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'] as const;
+
+function monthsCard(data: Insights, anim: Animations): HTMLElement | null {
+  const months = data.addedByMonth;
+  if (!months) return null;
+  const max = Math.max(...months.list.map((m) => m.count), 1);
+  const cols = months.list.map((m, i) => {
+    const isTop = m.label === months.top.label && m.year === months.top.year;
+    const bar = h('span', { class: `hist__bar${isTop ? ' is-top' : ''}` });
+    anim.push(() => {
+      bar.style.height = m.count === 0 ? '3px' : `${Math.max(6, Math.round((m.count / max) * 100))}%`;
+    });
+    const showYear = i === 0 || m.label === 'ene';
+    return h(
+      'div',
+      { class: 'hist__col' },
+      h('span', { class: 'hist__count' }, m.count > 0 ? fmtNumber(m.count) : ''),
+      h('div', { class: 'hist__well' }, bar),
+      h('span', { class: 'hist__label hist__label--month' }, m.label, h('small', {}, showYear ? m.year.slice(2) : '')),
+    );
+  });
+  const monthIndex = MONTHS_SHORT.indexOf(months.top.label as (typeof MONTHS_SHORT)[number]);
+  const topName = `${MONTHS_LONG[monthIndex] ?? months.top.label} de ${months.top.year}`;
+  return card(
+    'gold',
+    'Cuándo agregaste canciones',
+    h('p', { class: 'ins-big ins-big--md' }, fmtNumber(months.top.count), h('small', {}, 'en tu mes más activo')),
+    h('p', { class: 'ins-text' }, `Fue ${topName}.`),
+    h('div', { class: 'hist hist--compact hist--keys' }, ...cols),
+    months.hidden > 0 ? h('p', { class: 'ins-note' }, `Se muestran los últimos ${months.list.length} meses.`) : null,
+  );
+}
+
+function addersCard(data: Insights, anim: Animations): HTMLElement | null {
+  if (!data.adders) return null;
+  return card(
+    'blue',
+    'Top colaboradores',
+    h('p', { class: 'ins-caption' }, 'Canciones que agregó cada persona'),
+    rankList(data.adders, anim),
   );
 }
 
@@ -319,27 +391,15 @@ const BUILDERS: readonly Builder[] = [
   songsCard,
   popularityCard,
   vibeCard,
+  highlightsCard,
   tempoCard,
   durationCard,
   decadesCard,
+  monthsCard,
+  addersCard,
 ];
 
-const EASE = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
 const SWIPE_MIN_PX = 48;
-
-const prefersReducedMotion = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-
-/** Anima y espera a que termine (o se cancele). Con «reducir movimiento» no anima. */
-async function play(target: Element, frames: Keyframe[], ms: number, pseudo?: string): Promise<void> {
-  if (prefersReducedMotion() || typeof target.animate !== 'function') return;
-  const options: KeyframeAnimationOptions & { pseudoElement?: string } = { duration: ms, easing: EASE, fill: 'both' };
-  if (pseudo) options.pseudoElement = pseudo;
-  try {
-    await target.animate(frames, options).finished;
-  } catch {
-    /* animación cancelada: no pasa nada */
-  }
-}
 
 /** Ventana con un resumen «a lo Wrapped»: slides de a una, o todas juntas en la vista global. */
 export class InsightsModal {
@@ -351,6 +411,9 @@ export class InsightsModal {
   private readonly nextBtn: HTMLButtonElement;
   private readonly modeBtn: HTMLButtonElement;
   private readonly saveBtn: HTMLButtonElement;
+  private readonly shareBtn: HTMLButtonElement;
+  /** La imagen se dibuja una sola vez por apertura: descargar y compartir usan la misma. */
+  private image: Promise<Blob> | null = null;
   private readonly status = h('p', { class: 'ins__status', role: 'status' });
 
   private name = '';
@@ -367,10 +430,17 @@ export class InsightsModal {
     this.nextBtn = h('button', { class: 'ins__arrow', type: 'button', 'aria-label': 'Tarjeta siguiente', onclick: () => this.step(1) }, icon('chevronRight', 26)) as HTMLButtonElement;
     this.modeBtn = h('button', { class: 'ins__pill', type: 'button', onclick: () => void this.toggleMode() }) as HTMLButtonElement;
     this.saveBtn = h('button', { class: 'ins__pill', type: 'button', onclick: () => void this.saveImage() }) as HTMLButtonElement;
-    this.saveBtn.append(icon('download', 18), h('span', { class: 'ins__pill-label' }, 'Descargar imagen'));
+    this.saveBtn.append(icon('download', 18), h('span', { class: 'ins__pill-label' }, 'Descargar'));
+    this.saveBtn.title = 'Descargar el resumen como imagen';
+    this.saveBtn.setAttribute('aria-label', 'Descargar el resumen como imagen');
+    const canShare = InsightsModal.canShareFiles();
+    this.shareBtn = h('button', { class: 'ins__pill', type: 'button', onclick: () => void this.shareImage() }) as HTMLButtonElement;
+    this.shareBtn.append(icon(canShare ? 'share' : 'copy', 18), h('span', { class: 'ins__pill-label' }, canShare ? 'Compartir' : 'Copiar imagen'));
+    this.shareBtn.title = canShare ? 'Compartir el resumen como imagen' : 'Copiar el resumen como imagen para pegarlo en otra app';
+    this.shareBtn.setAttribute('aria-label', this.shareBtn.title);
     const close = h('button', { class: 'icon-btn ins__close', type: 'button', 'aria-label': 'Cerrar resumen', onclick: () => void this.close() }, icon('close', 20));
 
-    const bar = h('header', { class: 'ins__bar' }, h('span', { class: 'ins__bar-title' }, 'Resumen'), this.modeBtn, this.saveBtn, close);
+    const bar = h('div', { class: 'ins__bar' }, h('span', { class: 'ins__bar-title' }, 'Resumen'), this.modeBtn, this.shareBtn, this.saveBtn, close);
     this.nav.append(this.prevBtn, this.dots, this.nextBtn);
     this.dialog = h('dialog', { class: 'ins', 'aria-label': 'Resumen de tu playlist' }, bar, this.body, this.status, this.nav) as HTMLDialogElement;
 
@@ -405,6 +475,7 @@ export class InsightsModal {
   open(name: string, tracks: readonly Track[]): void {
     this.name = name;
     this.data = computeInsights(tracks);
+    this.image = null;
     this.mode = 'slides';
     this.index = 0;
     this.closing = false;
@@ -489,30 +560,48 @@ export class InsightsModal {
       const header = hero(data, anim, this.name);
       view = h(
         'div',
-        { class: 'ins__scroll' },
+        { class: 'ins__scroll', tabindex: '0', role: 'region', 'aria-label': 'Resumen completo' },
         header,
         h(
           'div',
           { class: 'ins__grid' },
           col(artistsCard(data, anim), songsCard(data, anim)),
           col(genresCard(data, anim), albumsCard(data, anim)),
-          popularityCard(data, anim),
-          vibeCard(data, anim),
-          tempoCard(data, anim),
-          durationCard(data, anim),
-          decadesCard(data, anim),
+          ...this.pairs(
+            popularityCard(data, anim),
+            vibeCard(data, anim),
+            tempoCard(data, anim),
+            durationCard(data, anim),
+            decadesCard(data, anim),
+            highlightsCard(data),
+            monthsCard(data, anim),
+            addersCard(data, anim),
+          ),
         ),
       );
     }
     this.dialog.classList.toggle('ins--slides', slides);
     this.dialog.classList.toggle('ins--global', !slides);
     this.body.replaceChildren(view);
+    // Si la tarjeta no entra entera (pantallas chicas) tiene que poder desplazarse con el teclado.
+    const card = view.firstElementChild;
+    if (slides && card instanceof HTMLElement && card.scrollHeight > card.clientHeight + 1) {
+      card.tabIndex = 0;
+      card.setAttribute('aria-label', 'Tarjeta del resumen');
+    }
     this.nav.hidden = !slides;
     this.updateControls();
 
     // Dos cuadros de espera: las barras parten de cero y recién después se llenan (si no, no hay animación).
     requestAnimationFrame(() => requestAnimationFrame(() => anim.forEach((run) => run())));
     await play(view, [{ opacity: 0, transform: shift ? `translateX(${dir * 36}px)` : 'scale(0.97)' }, { opacity: 1, transform: 'none' }], 320);
+  }
+
+  /** Tarjetas sueltas de la grilla: si queda una sola en la última fila, ocupa todo el ancho. */
+  private pairs(...cards: Array<HTMLElement | null>): HTMLElement[] {
+    const list = cards.filter((c): c is HTMLElement => c !== null);
+    if (list.length % 2 === 1) list[list.length - 1]?.classList.add('ins-card--wide');
+    return list;
   }
 
   private updateControls(): void {
@@ -546,23 +635,72 @@ export class InsightsModal {
     this.status.hidden = msg === '';
   }
 
-  private async saveImage(): Promise<void> {
-    if (!this.data || this.saveBtn.disabled) return;
-    this.saveBtn.disabled = true;
-    this.setStatus('Preparando la imagen…');
+  private static canShareFiles(): boolean {
     try {
-      const blob = await renderShareImage(this.name, this.data);
-      const url = URL.createObjectURL(blob);
-      const a = h('a', { href: url, download: shareFileName(this.name) });
-      document.body.append(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 10_000);
-      this.setStatus('¡Listo! La imagen se descargó.');
+      const probe = new File([''], 'probe.png', { type: 'image/png' });
+      return typeof navigator.share === 'function' && typeof navigator.canShare === 'function' && navigator.canShare({ files: [probe] });
     } catch {
-      this.setStatus('No se pudo generar la imagen. Probá de nuevo.');
+      return false;
+    }
+  }
+
+  private makeImage(): Promise<Blob> {
+    if (!this.image && this.data) this.image = renderShareImage(this.name, this.data);
+    if (!this.image) return Promise.reject(new Error('Sin datos'));
+    // Si falla, la próxima vez se vuelve a intentar.
+    this.image.catch(() => {
+      this.image = null;
+    });
+    return this.image;
+  }
+
+  /** Deshabilita los botones de imagen mientras se trabaja y muestra el resultado en el modal (los avisos de la página quedan detrás). */
+  private async withImage(busy: string, work: (blob: Blob) => Promise<string>): Promise<void> {
+    if (this.saveBtn.disabled) return;
+    this.saveBtn.disabled = true;
+    this.shareBtn.disabled = true;
+    this.setStatus(busy);
+    try {
+      this.setStatus(await work(await this.makeImage()));
+    } catch (err) {
+      // Cancelar el menú de compartir no es un error.
+      this.setStatus(err instanceof DOMException && err.name === 'AbortError' ? '' : 'No se pudo generar la imagen. Probá de nuevo.');
     } finally {
       this.saveBtn.disabled = false;
+      this.shareBtn.disabled = false;
     }
+  }
+
+  private download(blob: Blob): string {
+    const url = URL.createObjectURL(blob);
+    const a = h('a', { href: url, download: shareFileName(this.name) });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    return '¡Listo! La imagen se descargó.';
+  }
+
+  private saveImage(): Promise<void> {
+    return this.withImage('Preparando la imagen…', async (blob) => this.download(blob));
+  }
+
+  private shareImage(): Promise<void> {
+    return this.withImage('Preparando la imagen…', async (blob) => {
+      const file = new File([blob], shareFileName(this.name), { type: 'image/png' });
+      if (InsightsModal.canShareFiles()) {
+        await navigator.share({ files: [file], title: this.name });
+        return '';
+      }
+      if (typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
+        try {
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+          return '¡Imagen copiada! Pegala donde quieras compartirla.';
+        } catch {
+          /* sin permiso para el portapapeles: se descarga */
+        }
+      }
+      return `Tu navegador no permite copiar la imagen. ${this.download(blob)}`;
+    });
   }
 }

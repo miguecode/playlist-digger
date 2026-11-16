@@ -4,9 +4,11 @@ import './styles/table.css';
 import './styles/filters.css';
 import './styles/landing.css';
 import './styles/insights.css';
+import './styles/dialogs.css';
 
 import { columnsWithData, exportColumns, type Column } from './lib/columns';
 import { CsvError, parseCsv } from './lib/csv';
+import { extraCopies, findDuplicates, type DuplicateGroup } from './lib/duplicates';
 import { EXAMPLES, exampleSummary, exampleUrl, type Example } from './lib/examples';
 import { toCsv } from './lib/export';
 import {
@@ -35,11 +37,13 @@ import { parseQuery } from './lib/text';
 import type { Track } from './types';
 import { ColumnsMenu } from './ui/columns-menu';
 import { byId, h } from './ui/dom';
+import { DuplicatesModal } from './ui/duplicates-modal';
 import { FiltersPanel } from './ui/filters-panel';
 import { HistoryMenu, historyCard } from './ui/history';
 import { InsightsModal } from './ui/insights-modal';
 import { hideInfoTip, infoTip } from './ui/info-tip';
 import { brandMark, icon, spotifyMark } from './ui/icons';
+import { ShortcutsModal } from './ui/shortcuts-modal';
 import { VirtualTable } from './ui/table';
 
 /** Un CSV de Exportify pesa unos KB; algo mucho más grande no es una playlist. */
@@ -92,6 +96,8 @@ const fileInput = byId<HTMLInputElement>('file-input');
 const heroTitle = byId('hero-title');
 const heroSpotify = byId('hero-spotify') as HTMLAnchorElement;
 const heroMeta = byId('hero-meta');
+const btnDups = byId('btn-dups');
+const btnShortcuts = byId('btn-shortcuts');
 const search = byId<HTMLInputElement>('search');
 const searchClear = byId('search-clear');
 const btnFilters = byId('btn-filters');
@@ -123,6 +129,7 @@ byId('step-exportify').prepend(icon('external', 16));
 byId('link-github').prepend(icon('github', 16));
 byId('link-spotify').prepend(spotifyMark(16));
 byId('btn-insights').prepend(icon('sparkle', 24));
+btnShortcuts.append(icon('keyboard', 20));
 byId('topbar-github').prepend(icon('github', 18));
 btnExport.append(icon('download', 18), h('span', { class: 'btn__label' }, 'Exportar CSV'));
 btnExport.title = 'Descarga las canciones y columnas que ves ahora';
@@ -319,7 +326,23 @@ search.addEventListener('keydown', (ev) => {
 // ───────────────────────── Resumen de la playlist ─────────────────────────
 
 const insightsModal = new InsightsModal();
-byId('btn-insights').addEventListener('click', () => {
+let duplicates: DuplicateGroup[] = [];
+const duplicatesModal = new DuplicatesModal((text) => {
+  search.value = text;
+  search.dispatchEvent(new Event('input'));
+  search.focus();
+});
+const shortcutsModal = new ShortcutsModal();
+btnDups.addEventListener('click', () => {
+  hideInfoTip();
+  duplicatesModal.open(duplicates);
+});
+btnShortcuts.addEventListener('click', () => {
+  hideInfoTip();
+  shortcutsModal.open();
+});
+const btnInsights = byId('btn-insights');
+btnInsights.addEventListener('click', () => {
   if (!app.data) return;
   hideInfoTip();
   insightsModal.open(app.data.name, app.data.tracks);
@@ -370,10 +393,21 @@ document.addEventListener('keydown', (ev) => {
   const typing =
     target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
 
-  if (ev.key === '/' && !typing && !ev.ctrlKey && !ev.metaKey && !ev.altKey) {
+  const plain = !ev.ctrlKey && !ev.metaKey && !ev.altKey;
+  const dialogOpen = document.querySelector('dialog[open]') !== null;
+
+  if (ev.key === '/' && !typing && plain && !dialogOpen) {
     ev.preventDefault();
     search.focus();
     search.select();
+  } else if (!typing && plain && !dialogOpen && !ev.repeat && ['f', 'r', 'd', '?'].includes(ev.key.toLowerCase())) {
+    const key = ev.key.toLowerCase();
+    ev.preventDefault();
+    if (key === 'f') setFiltersOpen(!workspace.classList.contains('is-filters-open'));
+    else if (key === 'r') btnInsights.click();
+    else if (key === 'd') {
+      if (!btnDups.hidden) btnDups.click();
+    } else btnShortcuts.click();
   } else if (ev.key === 'Escape' && !desktop.matches && workspace.classList.contains('is-filters-open')) {
     setFiltersOpen(false);
   }
@@ -412,6 +446,14 @@ function openPlaylist(name: string, tracks: Track[]): void {
   const duration = totalDuration(tracks);
   heroMeta.textContent = duration > 0 ? `${plural(tracks.length)} · ${formatTotalDuration(duration)}` : plural(tracks.length);
   document.title = `${name} · Playlist Viewer`;
+  duplicates = findDuplicates(tracks);
+  const extra = extraCopies(duplicates);
+  btnDups.hidden = duplicates.length === 0;
+  btnDups.replaceChildren(
+    icon('warning', 16),
+    `${extra === 1 ? '1 canción repetida' : `${extra} canciones repetidas`}`,
+  );
+  btnDups.title = 'Ver qué canciones están repetidas en la playlist';
 
   welcome.hidden = true;
   workspace.hidden = false;

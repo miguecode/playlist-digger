@@ -2,6 +2,7 @@ import type { PercentField, Track } from '../types';
 import { albumUrl, artistUrl, labelUrl } from './spotify';
 import {
   DURATION_LABELS,
+  displayGenre,
   durationClass,
   fmtNumber,
   formatAddedAt,
@@ -156,7 +157,7 @@ export const COLUMNS: readonly Column[] = [
     text: (t) => t.genres.join(', '),
     sortValue: (t) => t.genres.join(', '),
     exportValue: (t) => t.genres.join(', '),
-    items: (t) => t.genres,
+    items: (t) => t.genres.map(displayGenre),
   },
   {
     key: 'popularity',

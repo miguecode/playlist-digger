@@ -1,0 +1,181 @@
+/* ───────────── Ventanas chicas: repetidas y atajos ───────────── */
+.sdlg {
+  width: min(560px, calc(100vw - 24px));
+  max-width: none;
+  max-height: calc(100dvh - 24px);
+  padding: 0;
+  border: 0;
+  border-radius: 18px;
+  background: var(--surface-2);
+  color: var(--text);
+  overflow: hidden;
+}
+
+.sdlg[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.sdlg::backdrop {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(3px);
+}
+
+.sdlg--dups {
+  width: min(640px, calc(100vw - 24px));
+}
+
+.sdlg__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex: none;
+  padding: 16px 12px 8px 22px;
+}
+
+.sdlg__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.sdlg__body {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  min-height: 0;
+  padding: 4px 22px 22px;
+  overflow: auto;
+}
+
+.sdlg__lead {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.dup {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--surface-3);
+}
+
+.dup__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.dup__hint {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.dup__list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dup__row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.dup__pos {
+  flex: none;
+  min-width: 44px;
+  color: var(--text-2);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dup__main {
+  display: grid;
+  min-width: 0;
+}
+
+.dup__name {
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dup__meta {
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dup__find {
+  justify-self: start;
+}
+
+.keys {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 16px;
+  align-items: center;
+  margin: 0;
+}
+
+.keys dt {
+  display: flex;
+  gap: 4px;
+}
+
+.keys dd {
+  margin: 0;
+  color: var(--text-2);
+}
+
+kbd {
+  min-width: 26px;
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--hover);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Botón «repetidas» de la cabecera */
+.dup-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 4px 12px 4px 8px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 196, 77, 0.16);
+  color: #ffd27a;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dup-btn:hover {
+  background: rgba(255, 196, 77, 0.26);
+}
+
+.dup-btn[hidden] {
+  display: none;
+}
