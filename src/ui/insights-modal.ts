@@ -4,6 +4,7 @@ import type { Track } from '../types';
 import { h } from './dom';
 import { icon, starsRow } from './icons';
 import { play } from './motion';
+import { shareText } from '../lib/app';
 import { renderShareImage, shareFileName } from './share-image';
 
 type Accent = 'green' | 'pink' | 'purple' | 'blue' | 'orange' | 'gold';
@@ -502,7 +503,8 @@ export class InsightsModal {
     else this.dialog.setAttribute('open', '');
     void play(this.dialog, [{ opacity: 0, transform: 'translateY(18px) scale(0.97)' }, { opacity: 1, transform: 'none' }], 320);
     void play(this.dialog, [{ opacity: 0 }, { opacity: 1 }], 320, '::backdrop');
-    void this.render(0);
+    this.body.replaceChildren(); // sin restos de la vez anterior: no hay nada que animar de salida
+    void this.render(0, 1, false, true);
   }
 
   async close(): Promise<void> {
@@ -548,7 +550,8 @@ export class InsightsModal {
     await this.render(this.index, 1, true);
   }
 
-  private async render(index: number, dir: 1 | -1 = 1, modeChange = false): Promise<void> {
+  /** `initial`: primera vista al abrir; la ventana ya entra con su propia animación, así que la tarjeta no repite la suya. */
+  private async render(index: number, dir: 1 | -1 = 1, modeChange = false, initial = false): Promise<void> {
     const data = this.data;
     if (!data) return;
     const token = ++this.token;
@@ -609,6 +612,7 @@ export class InsightsModal {
 
     // Dos cuadros de espera: las barras parten de cero y recién después se llenan (si no, no hay animación).
     requestAnimationFrame(() => requestAnimationFrame(() => anim.forEach((run) => run())));
+    if (initial) return;
     await play(view, [{ opacity: 0, transform: shift ? `translateX(${dir * 36}px)` : 'scale(0.97)' }, { opacity: 1, transform: 'none' }], 320);
   }
 
@@ -704,7 +708,7 @@ export class InsightsModal {
     return this.withImage('Preparando la imagen…', async (blob) => {
       const file = new File([blob], shareFileName(this.name), { type: 'image/png' });
       if (InsightsModal.canShareFiles()) {
-        await navigator.share({ files: [file], title: this.name });
+        await navigator.share({ files: [file], title: this.name, text: shareText(this.name) });
         return '';
       }
       if (typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {

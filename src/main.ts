@@ -8,6 +8,7 @@ import './styles/dialogs.css';
 import './styles/cards.css';
 
 import { columnsWithData, exportColumns, type Column } from './lib/columns';
+import { APP_NAME } from './lib/app';
 import { CsvError, parseCsv } from './lib/csv';
 import { extraCopies, findDuplicates, type DuplicateGroup } from './lib/duplicates';
 import { EXAMPLES, exampleSummary, exampleUrl, type Example } from './lib/examples';
@@ -551,7 +552,7 @@ function openPlaylist(name: string, tracks: Track[]): void {
   const duration = totalDuration(tracks);
   heroMeta.textContent =
     duration > 0 ? `${plural(tracks.length)} · ${formatTotalDuration(duration)}` : plural(tracks.length);
-  document.title = `${name} · Playlist Viewer`;
+  document.title = `${name} · ${APP_NAME}`;
   duplicates = findDuplicates(tracks);
   const extra = extraCopies(duplicates);
   btnDups.hidden = duplicates.length === 0;

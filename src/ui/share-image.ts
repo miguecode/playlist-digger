@@ -1,3 +1,4 @@
+import { APP_NAME } from '../lib/app';
 import { displayGenre, fmtNumber, formatDuration, formatTotalDuration } from '../lib/format';
 import type { Insights, Ranked } from '../lib/insights';
 
@@ -345,7 +346,7 @@ export async function renderShareImage(name: string, data: Insights): Promise<Bl
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
   font(ctx, 800, 30);
   ctx.textAlign = 'center';
-  ctx.fillText('Hecho con Playlist Viewer', W / 2, H - 64);
+  ctx.fillText(`Hecho con ${APP_NAME}`, W / 2, H - 64);
 
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('No se pudo generar la imagen.'))), 'image/png');

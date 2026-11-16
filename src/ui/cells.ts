@@ -25,9 +25,12 @@ export function explicitTag(): HTMLElement {
   return tag;
 }
 
+/** En el celular las búsquedas de artista, álbum y sello no funcionan bien: solo queda el enlace de la canción. */
+const phone = (): boolean => window.matchMedia?.('(max-width: 760px)').matches ?? false;
+
 /** Celda de texto con enlaces a Spotify (uno por artista); null si no corresponde. */
 function renderLinked(col: Column, track: Track, { terms, linksOn }: CellOptions): Node | null {
-  const items = linksOn ? (col.links?.(track) ?? []) : [];
+  const items = linksOn && !phone() ? (col.links?.(track) ?? []) : [];
   if (!items.some((item) => item.url)) return null;
   const nodes: Node[] = [];
   items.forEach((item, i) => {
