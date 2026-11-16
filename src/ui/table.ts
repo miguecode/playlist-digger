@@ -42,6 +42,7 @@ export class VirtualTable {
   private sort: SortState | null = null;
   private terms: readonly string[] = [];
   /** Columnas que quedan fijas al desplazar en horizontal → su posición "left". */
+  private readonly compact = window.matchMedia('(max-width: 760px)');
   private sticky = new Map<string, number>();
   private stickyEdge = '';
   /** Huella de lo que dibuja el encabezado (columnas + orden). */
@@ -63,6 +64,13 @@ export class VirtualTable {
 
     this.scroller.addEventListener('scroll', () => this.schedule(), { passive: true });
     new ResizeObserver(() => this.schedule()).observe(this.scroller);
+    // En pantallas chicas las columnas fijas ocupan demasiado lugar y no dejan ver lo que está a la derecha.
+    this.compact.addEventListener('change', () => {
+      if (this.columns.length === 0) return;
+      this.computeSticky();
+      this.renderHead();
+      this.render(true);
+    });
   }
 
   setData(
@@ -103,6 +111,7 @@ export class VirtualTable {
   private computeSticky(): void {
     this.sticky = new Map();
     this.stickyEdge = '';
+    if (this.compact.matches) return;
     let left = 0;
     for (const col of this.columns) {
       if (col.kind !== 'index' && col.kind !== 'title') break;

@@ -722,6 +722,47 @@
   text-align: center;
 }
 
+/* Lo más repetido (cabecera) */
+.ins-tops {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 20px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ins-tops li {
+  display: grid;
+  min-width: 0;
+}
+
+.ins-tops__label {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.88;
+}
+
+.ins-tops__value {
+  overflow: hidden;
+  font-size: 18px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ins-tops__count {
+  font-size: 13px;
+  opacity: 0.88;
+}
+
+@media (max-width: 760px) {
+  .ins-tops {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+}
+
 /* Vibra: género dominante y tonalidad */
 .ins-genre {
   margin: 0;
@@ -767,7 +808,6 @@
     height: calc(100dvh - 16px);
   }
 
-  .ins__bar-title,
   .ins__pill-label {
     display: none;
   }

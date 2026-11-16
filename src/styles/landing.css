@@ -460,11 +460,30 @@
   text-decoration: underline;
 }
 
+/* El texto legal al final del contenido solo se usa en pantallas chicas (en las grandes está en el pie fijo). */
+.legal__text--end {
+  display: none;
+}
+
 @media (max-width: 860px) {
+  /* El pie fijo muestra solo los enlaces; el aviso legal queda al final del scroll. */
   .legal {
     justify-content: center;
     text-align: center;
   }
+
+  .legal > .legal__text {
+    display: none;
+  }
+
+  .legal__text--end {
+    display: block;
+    margin: 8px 0 0;
+    color: var(--text-3);
+    font-size: 12px;
+    text-align: center;
+  }
+
 
   .steps {
     grid-template-columns: minmax(0, 1fr);

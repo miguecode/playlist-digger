@@ -80,12 +80,27 @@ function hero(data: Insights, _anim: Animations, name: string): HTMLElement {
   ];
   if (data.totalDurationMs > 0) stats.push(stat(formatTotalDuration(data.totalDurationMs), 'de música'));
   if (data.explicitShare !== null && data.explicitShare > 0) stats.push(stat(`${data.explicitShare}%`, 'explícitas'));
+  const top = (label: string, item: Ranked | undefined, text: (n: string) => string = (n) => n): HTMLElement | null =>
+    item
+      ? h(
+          'li',
+          {},
+          h('span', { class: 'ins-tops__label' }, label),
+          h('span', { class: 'ins-tops__value', title: text(item.name) }, text(item.name)),
+          h('span', { class: 'ins-tops__count' }, `${fmtNumber(item.count)} ${item.count === 1 ? 'canción' : 'canciones'}`),
+        )
+      : null;
+  const album = data.topAlbums[0] && data.topAlbums[0].count >= 2 ? data.topAlbums[0] : undefined;
+  const tops = [top('Artista más repetido', data.topArtists[0]), top('Género más repetido', data.topGenres[0], displayGenre), top('Álbum más repetido', album)].filter(
+    (el): el is HTMLElement => el !== null,
+  );
   return h(
     'div',
     { class: 'ins-hero' },
     h('p', { class: 'ins-hero__eyebrow' }, 'Tu playlist en resumen'),
     h('h2', { class: 'ins-hero__title', id: 'ins-title' }, name),
     h('div', { class: 'ins-stats' }, ...stats),
+    tops.length > 0 ? h('ul', { class: 'ins-tops' }, ...tops) : null,
     data.tags.length > 0 ? h('ul', { class: 'ins-tags' }, ...data.tags.map((tag) => h('li', {}, tag))) : null,
     h('p', { class: 'ins-note' }, `Calculado con las ${fmtNumber(data.trackCount)} canciones de la playlist, sin filtros.`),
   );

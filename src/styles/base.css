@@ -526,6 +526,17 @@ a.btn {
   color: var(--text-3);
 }
 
+.toolbar__keys {
+  margin-left: -6px; /* pegado a la búsqueda */
+}
+
+@media (max-width: 760px) {
+  /* En el celular no hay teclado: el botón de atajos sobra */
+  .toolbar__keys {
+    display: none;
+  }
+}
+
 .toolbar__actions {
   display: flex;
   flex-wrap: wrap;
@@ -644,6 +655,15 @@ a.btn {
 @media (max-width: 640px) {
   .brand__name {
     display: none;
+  }
+
+  /* En la pantalla inicial sí se muestra el nombre, seguido del ícono */
+  .app:has(.welcome:not([hidden])) .brand {
+    flex-direction: row-reverse;
+  }
+
+  .app:has(.welcome:not([hidden])) .brand__name {
+    display: inline;
   }
 
   /* Con tres botones no entran los textos: quedan solo los íconos (con nombre accesible y title) */
