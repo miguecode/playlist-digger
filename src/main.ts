@@ -3,6 +3,7 @@ import './styles/base.css';
 import './styles/table.css';
 import './styles/filters.css';
 import './styles/landing.css';
+import './styles/insights.css';
 
 import { columnsWithData, exportColumns, type Column } from './lib/columns';
 import { CsvError, parseCsv } from './lib/csv';
@@ -36,6 +37,7 @@ import { ColumnsMenu } from './ui/columns-menu';
 import { byId, h } from './ui/dom';
 import { FiltersPanel } from './ui/filters-panel';
 import { HistoryMenu, historyCard } from './ui/history';
+import { InsightsModal } from './ui/insights-modal';
 import { hideInfoTip, infoTip } from './ui/info-tip';
 import { brandMark, icon, spotifyMark } from './ui/icons';
 import { VirtualTable } from './ui/table';
@@ -120,6 +122,7 @@ btnOpen.prepend(icon('upload', 18));
 byId('step-exportify').prepend(icon('external', 16));
 byId('link-github').prepend(icon('github', 16));
 byId('link-spotify').prepend(spotifyMark(16));
+byId('btn-insights').prepend(icon('sparkle', 20));
 byId('topbar-github').prepend(icon('github', 18));
 btnExport.append(icon('download', 18), h('span', { class: 'btn__label' }, 'Exportar CSV'));
 btnExport.title = 'Descarga las canciones y columnas que ves ahora';
@@ -311,6 +314,15 @@ search.addEventListener('keydown', (ev) => {
   if (ev.key !== 'Escape') return;
   if (search.value) clearSearch();
   else search.blur();
+});
+
+// ───────────────────────── Resumen de la playlist ─────────────────────────
+
+const insightsModal = new InsightsModal();
+byId('btn-insights').addEventListener('click', () => {
+  if (!app.data) return;
+  hideInfoTip();
+  insightsModal.open(app.data.name, app.data.tracks);
 });
 
 // ───────────────────────── Pantalla completa ─────────────────────────

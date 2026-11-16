@@ -1,0 +1,532 @@
+/* ───────────── Resumen de la playlist («Wrapped») ───────────── */
+.ins {
+  width: min(1040px, calc(100vw - 24px));
+  max-width: none;
+  max-height: calc(100dvh - 24px);
+  padding: 0;
+  border: 0;
+  border-radius: 20px;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+.ins[open] {
+  display: flex;
+  animation: ins-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.ins::backdrop {
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+}
+
+@keyframes ins-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+}
+
+.ins__scroll {
+  flex: 1;
+  min-width: 0;
+  max-height: calc(100dvh - 24px);
+  overflow: auto;
+  padding-bottom: 24px;
+}
+
+.ins__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 3;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+}
+
+.ins__foot {
+  margin: 20px 24px 0;
+  color: var(--text-3);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* Cabecera */
+.ins-hero {
+  padding: 44px 32px 30px;
+  background: linear-gradient(135deg, #0e6b3a 0%, #1b4fa0 55%, #7a2a9a 100%);
+  color: #fff;
+}
+
+.ins-hero__eyebrow {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.ins-hero__title {
+  margin: 6px 0 20px;
+  padding-right: 40px;
+  font-size: clamp(2.25rem, 6vw, 4rem);
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.ins-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 36px;
+}
+
+.ins-stat {
+  display: grid;
+}
+
+.ins-stat__value {
+  font-size: clamp(1.5rem, 3.4vw, 2.25rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.ins-stat__label {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.ins-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ins-tags li {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* Grilla de tarjetas */
+.ins__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding: 16px 24px 0;
+}
+
+.ins__col {
+  display: grid;
+  gap: 16px;
+  min-width: 0; /* las tarjetas se estiran para que las dos columnas terminen a la misma altura */
+}
+
+.ins-card {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  min-width: 0;
+  padding: 22px 24px;
+  border-radius: 18px;
+  color: #fff;
+}
+
+.ins-card--fill {
+  grid-template-rows: auto auto 1fr;
+}
+
+.ins-card--fill .rank {
+  align-content: space-between;
+}
+
+.ins-card--wide {
+  grid-column: 1 / -1;
+}
+
+.ins-card--green {
+  background: linear-gradient(150deg, #0b5a31, #118246);
+}
+
+.ins-card--pink {
+  background: linear-gradient(150deg, #7d1566, #b82b86);
+}
+
+.ins-card--purple {
+  background: linear-gradient(150deg, #33237a, #5b3fb0);
+}
+
+.ins-card--blue {
+  background: linear-gradient(150deg, #0f4a78, #1a6fb3);
+}
+
+.ins-card--orange {
+  background: linear-gradient(150deg, #7a2f0d, #b34a17);
+}
+
+.ins-card--gold {
+  background: linear-gradient(150deg, #6b4f0a, #9c7413);
+}
+
+.ins-card__title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.ins-caption,
+.ins-note {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.ins-big {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  font-size: clamp(3rem, 7vw, 4.25rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.ins-big small {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0;
+  opacity: 0.8;
+}
+
+.ins-verdict {
+  display: grid;
+  gap: 2px;
+}
+
+.ins-verdict__label {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.ins-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  opacity: 0.92;
+}
+
+.ins-fact {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+.ins-song {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.ins-song__name {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ins-song__meta {
+  overflow: hidden;
+  font-size: 13px;
+  opacity: 0.8;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ins-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* Rankings y medidores */
+.rank {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rank__item {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.rank__pos {
+  font-size: 18px;
+  font-weight: 900;
+  opacity: 0.7;
+  text-align: center;
+}
+
+.rank__main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.rank__name {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rank__detail {
+  margin-top: -3px;
+  overflow: hidden;
+  font-size: 12px;
+  opacity: 0.75;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rank__item:first-child .rank__pos {
+  font-size: 26px;
+  opacity: 1;
+}
+
+.rank__item:first-child .rank__name {
+  font-size: 19px;
+  font-weight: 900;
+}
+
+.rank__count {
+  min-width: 2ch;
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.rank__bar {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.rank__fill {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: 3px;
+  background: #fff;
+  transition: width 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.meters {
+  display: grid;
+  gap: 14px;
+}
+
+.meter {
+  display: grid;
+  gap: 6px;
+}
+
+.meter__head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.meter__head strong {
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Estrellas grandes de la popularidad */
+.ins-stars {
+  align-self: start;
+  justify-self: start;
+}
+
+.ins-stars .stars__base {
+  color: rgba(255, 255, 255, 0.22);
+}
+
+.ins-stars .stars__fill {
+  color: #ffd75e;
+  transition: width 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+  width: 0;
+}
+
+/* Duración: barra apilada y leyenda */
+.stack {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.seg {
+  display: block;
+  width: 0;
+  height: 100%;
+  transition: width 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.seg--short,
+.dot--short {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.seg--medium,
+.dot--medium {
+  background: #fff;
+}
+
+.seg--long,
+.dot--long {
+  background: #ffd75e;
+}
+
+.seg--podcast,
+.dot--podcast {
+  background: #1ed760;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 700;
+  list-style: none;
+}
+
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+/* Épocas: histograma */
+.hist {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  height: 190px;
+  padding-top: 4px;
+}
+
+.hist__col {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  justify-items: center;
+  gap: 6px;
+}
+
+.hist__count {
+  min-height: 18px;
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.hist__well {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
+}
+
+.hist__bar {
+  display: block;
+  width: 100%;
+  max-width: 64px;
+  height: 0;
+  border-radius: 8px 8px 3px 3px;
+  background: rgba(255, 255, 255, 0.55);
+  transition: height 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.hist__bar.is-top {
+  background: #ffd75e;
+}
+
+.hist__label {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+@media (max-width: 760px) {
+  .ins {
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+    border-radius: 16px;
+  }
+
+  .ins__scroll {
+    max-height: calc(100dvh - 16px);
+  }
+
+  .ins-hero {
+    padding: 36px 20px 24px;
+  }
+
+  .ins__grid {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 12px 12px 0;
+  }
+
+  .ins-card {
+    padding: 20px;
+  }
+
+  .ins-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hist {
+    gap: 6px;
+  }
+}
