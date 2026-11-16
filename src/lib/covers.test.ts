@@ -10,10 +10,16 @@ describe('parseCover', () => {
     expect(parseCover({ thumbnail_url: 'https://i.scdn.co/image/abc' })).toBe('https://i.scdn.co/image/abc');
   });
 
+  it('acepta el CDN actual de Spotify (spotifycdn.com)', () => {
+    const url = 'https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e021925df742e08c0f40bd73208';
+    expect(parseCover({ thumbnail_url: url })).toBe(url);
+  });
+
   it.each([
     ['http', 'http://i.scdn.co/image/abc'],
     ['otro dominio', 'https://evil.example/x.png'],
     ['dominio parecido', 'https://scdn.co.evil.example/x.png'],
+    ['sufijo engañoso', 'https://evilspotifycdn.com/x.png'],
     ['javascript:', 'javascript:alert(1)'],
     ['basura', 'no es una url'],
   ])('rechaza %s', (_name, url) => {

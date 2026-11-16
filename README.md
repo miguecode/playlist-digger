@@ -71,8 +71,8 @@ src/
 ## Seguridad y privacidad
 
 - El texto del CSV siempre se inserta como texto, nunca como HTML.
-- `vercel.json` define una Content-Security-Policy estricta (sin scripts ni estilos en línea); solo permite conectarse a `open.spotify.com` y cargar imágenes de `i.scdn.co`.
-- Las carátulas solo se aceptan si vienen por https del CDN de Spotify, se piden de a 4, solo las visibles, y se guardan únicamente mientras la pestaña esté abierta (los términos de Spotify solo permiten cachear carátulas de forma temporal).
+- `vercel.json` define una Content-Security-Policy estricta (sin scripts ni estilos en línea); solo permite conectarse a `open.spotify.com` y cargar imágenes de los CDN de Spotify (`*.scdn.co` y `*.spotifycdn.com`).
+- Las carátulas solo se aceptan si vienen por https de un CDN de Spotify, se piden de a 4, solo las visibles, y se guardan únicamente mientras la pestaña esté abierta (los términos de Spotify solo permiten cachear carátulas de forma temporal).
 - Al exportar, los valores que empiezan con `=`, `+`, `-` o `@` se escapan para que Excel o Sheets no los interpreten como fórmulas.
 
 ## Aviso

@@ -8,16 +8,17 @@ const OEMBED = 'https://open.spotify.com/oembed?url=';
 const TRACK_ID = /^[A-Za-z0-9]{22}$/;
 const STORE_PREFIX = 'pv:cover:';
 
-/** Solo se aceptan imágenes del CDN de Spotify, por https (la URL viene de un tercero). */
+const CDN_DOMAINS = ['scdn.co', 'spotifycdn.com'];
+
+/** Solo se aceptan imágenes de los CDN de Spotify, por https (la URL viene de un tercero). */
 export function parseCover(data: unknown): string | null {
   if (typeof data !== 'object' || data === null) return null;
   const raw = (data as { thumbnail_url?: unknown }).thumbnail_url;
   if (typeof raw !== 'string') return null;
   try {
     const url = new URL(raw);
-    return url.protocol === 'https:' && (url.hostname === 'scdn.co' || url.hostname.endsWith('.scdn.co'))
-      ? url.href
-      : null;
+    const fromSpotify = CDN_DOMAINS.some((d) => url.hostname === d || url.hostname.endsWith(`.${d}`));
+    return url.protocol === 'https:' && fromSpotify ? url.href : null;
   } catch {
     return null;
   }
