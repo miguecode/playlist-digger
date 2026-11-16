@@ -115,26 +115,28 @@ export class CardGrid {
           }
         },
       },
-      coverElement(track, 'cover card__cover'),
       h(
         'div',
-        { class: 'card__body' },
+        { class: 'card__top' },
+        coverElement(track, 'cover card__cover'),
         h(
           'div',
-          { class: 'card__head' },
-          h('span', { class: 'card__title', title: track.name }, highlight(track.name, this.terms)),
-          track.explicit ? h('span', { class: 'card__e', 'aria-label': 'Explícita' }, 'E') : null,
+          { class: 'card__body' },
+          h(
+            'div',
+            { class: 'card__head' },
+            h('span', { class: 'card__title', title: track.name }, highlight(track.name, this.terms)),
+            track.explicit ? h('span', { class: 'card__e', 'aria-label': 'Explícita' }, 'E') : null,
+          ),
+          h('p', { class: 'card__artists' }, highlight(track.artists.join(', ') || 'Sin artista', this.terms)),
+          h('p', { class: 'card__album' }, highlight([track.album, year].filter(Boolean).join(' · '), this.terms)),
         ),
-        h('p', { class: 'card__artists' }, highlight(track.artists.join(', ') || 'Sin artista', this.terms)),
-        h('p', { class: 'card__album' }, highlight([track.album, year].filter(Boolean).join(' · '), this.terms)),
-        h(
-          'div',
-          { class: 'card__foot' },
-          duration && track.durationMs !== null
-            ? renderCell(duration, track, { terms: [], linksOn: false })
-            : h('span'),
-          popularity && track.popularity !== null ? renderCell(popularity, track, { terms: [], linksOn: false }) : null,
-        ),
+      ),
+      h(
+        'div',
+        { class: 'card__foot' },
+        duration && track.durationMs !== null ? renderCell(duration, track, { terms: [], linksOn: false }) : h('span'),
+        popularity && track.popularity !== null ? renderCell(popularity, track, { terms: [], linksOn: false }) : null,
       ),
     );
   }

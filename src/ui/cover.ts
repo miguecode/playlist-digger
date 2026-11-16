@@ -4,6 +4,7 @@ import { h } from './dom';
 import { icon } from './icons';
 
 const loader = new CoverLoader({
+  concurrency: 6,
   storage: (() => {
     try {
       return window.sessionStorage;
@@ -36,7 +37,7 @@ export function coverElement(track: Track, className = 'cover'): HTMLElement {
     queueMicrotask(() => show(known));
   } else {
     // Un instante de espera: si se scrollea rápido, las tarjetas que ya no se ven no llegan a pedir nada.
-    window.setTimeout(() => void loader.request(id, () => box.isConnected).then(show), 150);
+    window.setTimeout(() => void loader.request(id, () => box.isConnected).then(show), 80);
   }
   return box;
 }

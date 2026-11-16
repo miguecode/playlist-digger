@@ -23,8 +23,8 @@
 
 .card {
   display: flex;
-  align-items: stretch;
-  gap: 14px;
+  flex-direction: column;
+  gap: 10px;
   height: 148px;
   padding: 14px 16px;
   overflow: hidden;
@@ -41,6 +41,13 @@
 .card:focus-visible {
   outline: 2px solid var(--text);
   outline-offset: 2px;
+}
+
+.card__top {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
 }
 
 .card__body {
@@ -375,9 +382,8 @@
 }
 
 .card__cover {
-  align-self: center;
-  width: 72px;
-  height: 72px;
+  width: 68px;
+  height: 68px;
 }
 
 .tdet__top {
@@ -411,4 +417,16 @@
   .cover svg {
     transition: none;
   }
+}
+
+/* Miniatura de la tabla, a la izquierda del nombre */
+.td .cover {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+}
+
+.td .cover svg {
+  width: 16px;
+  height: 16px;
 }

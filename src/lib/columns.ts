@@ -89,7 +89,7 @@ export const COLUMNS: readonly Column[] = [
     key: 'name',
     label: 'Canción',
     kind: 'title',
-    width: 300,
+    width: 344,
     defaultVisible: true,
     defaultDir: 'asc',
     text: (t) => t.name,

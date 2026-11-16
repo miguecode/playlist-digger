@@ -3,6 +3,7 @@ import { columnHelp } from '../lib/help';
 import { cellText } from '../lib/search';
 import { trackUrl } from '../lib/spotify';
 import type { Track } from '../types';
+import { coverElement } from './cover';
 import { h, highlight } from './dom';
 import { starsRow } from './icons';
 import { bindTip } from './info-tip';
@@ -12,6 +13,8 @@ export interface CellOptions {
   terms: readonly string[];
   /** Si es true, canción, artistas, álbum y sello son enlaces a Spotify. */
   linksOn: boolean;
+  /** Si es true, la celda de la canción lleva su carátula a la izquierda (solo en la tabla). */
+  covers?: boolean;
 }
 
 /** «E» de contenido explícito, a la derecha de la canción; al pasar el mouse explica qué significa. */
@@ -56,7 +59,7 @@ function renderLinked(col: Column, track: Track, { terms, linksOn }: CellOptions
 
 /** Contenido de una celda (de la tabla o del detalle de una canción). */
 export function renderCell(col: Column, track: Track, options: CellOptions): Node {
-  const { terms, linksOn } = options;
+  const { terms, linksOn, covers } = options;
   const text = cellText(col, track);
   if (text === '' && col.kind !== 'index') {
     return col.unknown
@@ -84,6 +87,8 @@ export function renderCell(col: Column, track: Track, options: CellOptions): Nod
             content,
           )
         : h('span', { class: 'cell-title', title: text }, content);
+      if (covers)
+        return h('div', { class: 'title-cell' }, coverElement(track), title, track.explicit ? explicitTag() : null);
       return track.explicit ? h('div', { class: 'title-cell' }, title, explicitTag()) : title;
     }
 

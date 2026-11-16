@@ -193,6 +193,6 @@ export class VirtualTable {
   }
 
   private renderCell(col: Column, track: Track): Node {
-    return renderCell(col, track, { terms: this.terms, linksOn: this.linksOn });
+    return renderCell(col, track, { terms: this.terms, linksOn: this.linksOn, covers: true });
   }
 }
