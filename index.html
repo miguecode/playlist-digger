@@ -202,12 +202,16 @@
                     <select class="sortbox__select" id="sort-select" aria-label="Ordenar por"></select>
                     <button class="icon-btn sortbox__dir" id="sort-dir" type="button"></button>
                   </div>
-                  <button class="btn btn--ghost" id="btn-view" type="button"></button>
                   <div class="switch-wrap" id="switch-wrap">
                     <button class="switch" id="switch-links" type="button" role="switch" aria-checked="true">
                       <span class="switch__track" aria-hidden="true"><span class="switch__knob"></span></span>
-                      <span class="switch__label">Abrir en Spotify</span>
+                      <span class="switch__label">Enlaces</span>
                     </button>
+                  </div>
+                  <div class="viewtoggle" id="view-toggle" role="group" aria-label="Tipo de vista">
+                    <span class="viewtoggle__thumb" aria-hidden="true"></span>
+                    <button class="viewtoggle__btn" id="view-table" type="button" aria-label="Ver como tabla" title="Ver como tabla"></button>
+                    <button class="viewtoggle__btn" id="view-cards" type="button" aria-label="Ver como tarjetas" title="Ver como tarjetas"></button>
                   </div>
                   <button class="btn btn--ghost" id="btn-filters" type="button" aria-controls="filters" aria-expanded="true"></button>
                   <div class="popover-host" id="columns-host"></div>

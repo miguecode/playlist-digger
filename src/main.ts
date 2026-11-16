@@ -108,7 +108,9 @@ const status = byId('status');
 const tableHost = byId('table-host');
 const empty = byId('empty');
 const cardsHost = byId('cards-host');
-const btnView = byId('btn-view');
+const viewTable = byId('view-table');
+const viewCards = byId('view-cards');
+const viewToggle = byId('view-toggle');
 const btnFocus = byId('btn-focus');
 const btnFocusExit = byId('btn-focus-exit');
 const sortbox = byId('sortbox');
@@ -146,7 +148,7 @@ const switchWrap = byId('switch-wrap');
 const SWITCH_HELP =
   'Con el interruptor activado, hacer clic en una canción la abre en Spotify. En artistas, álbumes y sellos abre la búsqueda en Spotify: el CSV no trae sus enlaces directos. Si lo desactivás, nada es un enlace.';
 
-// Interruptor «Abrir en Spotify»: activa o desactiva todos los enlaces de la tabla (se recuerda entre visitas)
+// Interruptor «Enlaces»: activa o desactiva todos los enlaces de la tabla (se recuerda entre visitas)
 const LINKS_KEY = 'playlist-viewer:spotify-links';
 const switchLinks = byId<HTMLButtonElement>('switch-links');
 let linksOn = loadJson<unknown>(LINKS_KEY) !== false;
@@ -182,7 +184,7 @@ switchLinks.addEventListener('click', () => {
   applyLinks(!linksOn);
   saveJson(LINKS_KEY, linksOn);
 });
-switchWrap.append(infoTip('Abrir en Spotify', SWITCH_HELP));
+switchWrap.append(infoTip('Enlaces', SWITCH_HELP));
 byId('hero-spotify-icon').append(spotifyMark(20));
 
 const panel = new FiltersPanel(byId('filters-body'), (next) => {
@@ -222,15 +224,13 @@ let view: View = loadJson<unknown>(VIEW_KEY) === 'cards' ? 'cards' : 'table';
 
 function applyView(next: View): void {
   view = next;
-  const cardsOn = next === 'cards';
-  btnView.replaceChildren(
-    icon(cardsOn ? 'list' : 'cards', 18),
-    h('span', { class: 'btn__label' }, cardsOn ? 'Ver tabla' : 'Ver tarjetas'),
-  );
-  btnView.title = cardsOn ? 'Cambiar a la vista de tabla' : 'Cambiar a la vista de tarjetas';
-  btnView.setAttribute('aria-label', btnView.title);
-  btnView.setAttribute('aria-pressed', String(cardsOn));
+  viewToggle.classList.toggle('is-cards', next === 'cards');
+  viewTable.setAttribute('aria-pressed', String(next === 'table'));
+  viewCards.setAttribute('aria-pressed', String(next === 'cards'));
 }
+
+viewTable.append(icon('list', 18));
+viewCards.append(icon('cards', 18));
 
 /** En tarjetas no hay encabezados para ordenar: se ordena con este selector. */
 function renderSortbox(shown: readonly Column[]): void {
@@ -238,7 +238,7 @@ function renderSortbox(shown: readonly Column[]): void {
   if (view !== 'cards') return;
   const sortable = shown.filter((col) => col.kind !== 'index');
   sortSelect.replaceChildren(
-    h('option', { value: '' }, 'Orden original'),
+    h('option', { value: '' }, 'Original'),
     ...sortable.map((col) => h('option', { value: col.key }, col.label)),
   );
   sortSelect.value = app.sort?.key ?? '';
@@ -264,11 +264,14 @@ sortDir.addEventListener('click', () => {
   update(true);
 });
 
-btnView.addEventListener('click', () => {
-  applyView(view === 'cards' ? 'table' : 'cards');
+function chooseView(next: View): void {
+  if (next === view) return;
+  applyView(next);
   saveJson(VIEW_KEY, view);
   update(false);
-});
+}
+viewTable.addEventListener('click', () => chooseView('table'));
+viewCards.addEventListener('click', () => chooseView('cards'));
 applyView(view);
 
 // «Solo la lista»: en el celular oculta todo lo de arriba (solo se aplica con pantalla angosta; no se recuerda entre visitas)
