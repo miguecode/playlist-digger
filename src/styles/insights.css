@@ -726,6 +726,11 @@
   align-content: center;
 }
 
+/* Si la tarjeta no entra, se lee desde arriba y se desplaza hacia abajo. */
+.ins--slides .ins__stage > .ins-card.is-scrollable {
+  align-content: start;
+}
+
 .ins--slides .ins-highlight {
   gap: 4px;
 }

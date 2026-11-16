@@ -40,12 +40,21 @@ export interface Highlight {
   song: TrackRef;
 }
 
+export interface AddedPeriod {
+  label: string;
+  year: string;
+  count: number;
+}
+
 export interface AddedByMonth {
-  /** Del mes más viejo al más nuevo (máximo 12, los últimos). */
-  list: { label: string; year: string; count: number }[];
-  top: { label: string; year: string; count: number };
-  /** Cuántos meses con datos quedaron afuera por antigüedad. */
-  hidden: number;
+  /** `month` si las canciones se agregaron a lo largo de un año o menos; si no, un grupo por año. */
+  unit: 'month' | 'year';
+  /** De lo más viejo a lo más nuevo, toda la historia y sin saltear períodos (los vacíos valen 0). */
+  list: AddedPeriod[];
+  /** El período del gráfico con más canciones. */
+  top: AddedPeriod;
+  /** El mes con más canciones (aunque el gráfico vaya por año). */
+  topMonth: AddedPeriod;
 }
 
 export interface GenreFlavor {
@@ -276,8 +285,11 @@ export function normalizeBpm(bpm: number): { value: number; adjusted: boolean } 
 
 const MONTH_NAMES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'] as const;
 
-/** Meses en los que se agregaron canciones (usa el día local de cada canción). */
-export function computeAddedByMonth(tracks: readonly Track[], maxMonths = 12): AddedByMonth | null {
+/** Hasta cuántos meses (de la primera a la última canción agregada) se muestra mes por mes; más que eso, año por año. */
+const MONTHLY_SPAN = 12;
+
+/** Cuándo se agregaron las canciones, desde la primera hasta la última (usa el día local de cada canción). */
+export function computeAddedByMonth(tracks: readonly Track[]): AddedByMonth | null {
   const counts = new Map<number, number>();
   for (const t of tracks) {
     if (t.addedAt === null) continue;
@@ -288,13 +300,22 @@ export function computeAddedByMonth(tracks: readonly Track[], maxMonths = 12): A
   if (counts.size < 2) return null;
   const first = Math.min(...counts.keys());
   const last = Math.max(...counts.keys());
-  const all: AddedByMonth['list'] = [];
+
+  const months: AddedPeriod[] = [];
   for (let i = first; i <= last; i++) {
-    all.push({ label: MONTH_NAMES[i % 12] ?? '', year: String(Math.floor(i / 12)), count: counts.get(i) ?? 0 });
+    months.push({ label: MONTH_NAMES[i % 12] ?? '', year: String(Math.floor(i / 12)), count: counts.get(i) ?? 0 });
   }
-  const top = all.reduce((best, m) => (m.count > best.count ? m : best), all[0] as AddedByMonth['list'][number]);
-  const list = all.slice(-maxMonths);
-  return { list, top, hidden: Math.max(0, all.length - list.length) };
+  const best = (list: AddedPeriod[]): AddedPeriod => list.reduce((acc, m) => (m.count > acc.count ? m : acc), list[0] as AddedPeriod);
+  const topMonth = best(months);
+  if (months.length <= MONTHLY_SPAN) return { unit: 'month', list: months, top: topMonth, topMonth };
+
+  const years: AddedPeriod[] = [];
+  for (let y = Math.floor(first / 12); y <= Math.floor(last / 12); y++) {
+    let count = 0;
+    for (const m of months) if (m.year === String(y)) count += m.count;
+    years.push({ label: String(y), year: String(y), count });
+  }
+  return { unit: 'year', list: years, top: best(years), topMonth };
 }
 
 const yearOf = (t: Track): number | null => (t.releaseDate ? Number(t.releaseDate.slice(0, 4)) : null);

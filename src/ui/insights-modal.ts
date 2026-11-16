@@ -299,6 +299,7 @@ const MONTHS_SHORT = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 's
 function monthsCard(data: Insights, anim: Animations): HTMLElement | null {
   const months = data.addedByMonth;
   if (!months) return null;
+  const byYear = months.unit === 'year';
   const max = Math.max(...months.list.map((m) => m.count), 1);
   const cols = months.list.map((m, i) => {
     const isTop = m.label === months.top.label && m.year === months.top.year;
@@ -306,24 +307,22 @@ function monthsCard(data: Insights, anim: Animations): HTMLElement | null {
     anim.push(() => {
       bar.style.height = m.count === 0 ? '3px' : `${Math.max(6, Math.round((m.count / max) * 100))}%`;
     });
-    const showYear = i === 0 || m.label === 'ene';
-    return h(
-      'div',
-      { class: 'hist__col' },
-      h('span', { class: 'hist__count' }, m.count > 0 ? fmtNumber(m.count) : ''),
-      h('div', { class: 'hist__well' }, bar),
-      h('span', { class: 'hist__label hist__label--month' }, m.label, h('small', {}, showYear ? m.year.slice(2) : '')),
-    );
+    // Por año: el año completo si hay pocas columnas y abreviado si son muchas. Por mes: el año se marca en el primero y en cada enero.
+    const label = byYear
+      ? h('span', { class: 'hist__label' }, months.list.length > 7 ? `’${m.year.slice(2)}` : m.year)
+      : h('span', { class: 'hist__label hist__label--month' }, m.label, h('small', {}, i === 0 || m.label === 'ene' ? m.year.slice(2) : ''));
+    return h('div', { class: 'hist__col' }, h('span', { class: 'hist__count' }, m.count > 0 ? fmtNumber(m.count) : ''), h('div', { class: 'hist__well' }, bar), label);
   });
-  const monthIndex = MONTHS_SHORT.indexOf(months.top.label as (typeof MONTHS_SHORT)[number]);
-  const topName = `${MONTHS_LONG[monthIndex] ?? months.top.label} de ${months.top.year}`;
+  const top = months.topMonth;
+  const monthIndex = MONTHS_SHORT.indexOf(top.label as (typeof MONTHS_SHORT)[number]);
+  const topName = `${MONTHS_LONG[monthIndex] ?? top.label} de ${top.year}`;
   return card(
     'gold',
     'Cuándo agregaste canciones',
-    h('p', { class: 'ins-big ins-big--md' }, fmtNumber(months.top.count), h('small', {}, 'en tu mes más activo')),
+    h('p', { class: 'ins-big ins-big--md' }, fmtNumber(top.count), h('small', {}, 'en tu mes más activo')),
     h('p', { class: 'ins-text' }, `Fue ${topName}.`),
-    h('div', { class: 'hist hist--compact hist--keys' }, ...cols),
-    months.hidden > 0 ? h('p', { class: 'ins-note' }, `Se muestran los últimos ${months.list.length} meses.`) : null,
+    h('div', { class: `hist hist--compact hist--keys${byYear ? ' hist--years' : ''}` }, ...cols),
+    byYear ? h('p', { class: 'ins-note' }, `Canciones agregadas cada año, desde ${months.list[0]?.year}.`) : null,
   );
 }
 
@@ -413,13 +412,13 @@ const BUILDERS: readonly Builder[] = [
   albumsCard,
   songsCard,
   popularityCard,
-  vibeCard,
   highlightsCard,
-  tempoCard,
   durationCard,
   decadesCard,
-  monthsCard,
   addersCard,
+  vibeCard,
+  tempoCard,
+  monthsCard,
 ];
 
 const SWIPE_MIN_PX = 48;
@@ -594,13 +593,13 @@ export class InsightsModal {
           col(genresCard(data, anim), albumsCard(data, anim)),
           ...this.pairs(
             popularityCard(data, anim),
-            vibeCard(data, anim),
-            tempoCard(data, anim),
+            highlightsCard(data),
             durationCard(data, anim),
             decadesCard(data, anim),
-            highlightsCard(data),
-            monthsCard(data, anim),
             addersCard(data, anim),
+            vibeCard(data, anim),
+            tempoCard(data, anim),
+            monthsCard(data, anim),
           ),
         ),
       );
@@ -610,9 +609,11 @@ export class InsightsModal {
     this.body.replaceChildren(view);
     // Si la tarjeta no entra entera (pantallas chicas) tiene que poder desplazarse con el teclado.
     const card = view.firstElementChild;
+    // Además se alinea arriba: centrada, la parte que se pasa del alto quedaría cortada por arriba y sin forma de verla.
     if (slides && card instanceof HTMLElement && card.scrollHeight > card.clientHeight + 1) {
       card.tabIndex = 0;
       card.setAttribute('aria-label', 'Tarjeta del resumen');
+      card.classList.add('is-scrollable');
     }
     this.nav.hidden = !slides;
     this.updateControls();

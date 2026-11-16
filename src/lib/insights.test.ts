@@ -190,11 +190,29 @@ describe('agregadas por mes y colaboradores', () => {
     expect(r?.list.map((m) => [m.label, m.count])).toEqual([['ene', 1], ['feb', 0], ['mar', 2]]);
     expect(r?.top).toMatchObject({ label: 'mar', count: 2 });
   });
-  it('se queda con los últimos meses y avisa cuántos quedaron afuera', () => {
-    const tracks = Array.from({ length: 14 }, (_, i) => t({ addedAt: new Date(2025, i, 10, 12).getTime() }));
+  it('hasta un año de diferencia va mes por mes', () => {
+    const tracks = Array.from({ length: 12 }, (_, i) => t({ addedAt: new Date(2025, i, 10, 12).getTime() }));
     const r = computeAddedByMonth(tracks);
+    expect(r?.unit).toBe('month');
     expect(r?.list).toHaveLength(12);
-    expect(r?.hidden).toBe(2);
+  });
+  it('con más de un año cuenta todo el historial, año por año', () => {
+    const tracks = [
+      ...Array.from({ length: 30 }, () => t({ addedAt: new Date(2022, 2, 10, 12).getTime() })),
+      ...Array.from({ length: 30 }, () => t({ addedAt: new Date(2025, 2, 12, 12).getTime() })),
+    ];
+    const r = computeAddedByMonth(tracks);
+    expect(r?.unit).toBe('year');
+    expect(r?.list.map((y) => [y.label, y.count])).toEqual([['2022', 30], ['2023', 0], ['2024', 0], ['2025', 30]]);
+    expect(r?.topMonth).toMatchObject({ label: 'mar', year: '2022', count: 30 });
+  });
+  it('el período con más canciones se resalta aunque no sea el último', () => {
+    const tracks = [
+      ...Array.from({ length: 3 }, () => t({ addedAt: new Date(2019, 5, 1, 12).getTime() })),
+      t({ addedAt: new Date(2021, 0, 5, 12).getTime() }),
+    ];
+    const r = computeAddedByMonth(tracks);
+    expect(r?.top).toMatchObject({ label: '2019', count: 3 });
   });
   it('con un solo mes (o sin fechas) no hay gráfico', () => {
     expect(computeAddedByMonth([t({ addedAt: at('2026-01-15T12:00:00') })])).toBeNull();
