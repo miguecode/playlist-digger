@@ -28,6 +28,25 @@ export interface Decade {
   count: number;
 }
 
+export interface GenreFlavor {
+  /** El género tal como viene en el CSV. */
+  name: string;
+  /** Qué suele pasar con la vibra en ese tipo de música. */
+  note: string;
+}
+
+export interface Tonality {
+  /** Tonalidad más repetida (nota + modo) y cuántas canciones la tienen. */
+  favorite: { name: string; count: number };
+  /** Cuántas canciones tienen cada nota (0 = Do … 11 = Si), sin importar el modo. */
+  perKey: { label: string; count: number }[];
+  /** Nota de la tonalidad favorita (para resaltarla en el gráfico). */
+  favoriteKey: number;
+  /** Porcentaje (0–100) de canciones en modo mayor. */
+  majorShare: number;
+  known: number;
+}
+
 export interface Insights {
   trackCount: number;
   totalDurationMs: number;
@@ -52,8 +71,11 @@ export interface Insights {
     valence: number | null;
     mood: Verdict | null;
     dance: Verdict | null;
+    /** Género más repetido y lo que suele esperarse de él; null si no hay géneros. */
+    genre: GenreFlavor | null;
+    tonality: Tonality | null;
   } | null;
-  /** Las canciones más populares (hasta 5). */
+  /** Las canciones más populares (hasta 10). */
   topSongs: TrackRef[];
   tempo: {
     average: number;
@@ -111,6 +133,62 @@ export function durationVerdict(averageMs: number): Verdict {
   if (averageMs < 165_000) return { label: 'Temas cortitos', text: 'Vas al hueso: canciones que no se hacen largas.' };
   if (averageMs <= DURATION_LIMITS.medium) return { label: 'Duración clásica', text: 'La medida de una canción de radio.' };
   return { label: 'Temas largos', text: 'Te gusta que las canciones se tomen su tiempo.' };
+}
+
+/** Notas en español, indexadas como en Spotify (0 = Do … 11 = Si). */
+export const KEY_NAMES = ['Do', 'Do♯', 'Re', 'Re♯', 'Mi', 'Fa', 'Fa♯', 'Sol', 'Sol♯', 'La', 'La♯', 'Si'] as const;
+
+/**
+ * Qué se espera de la vibra según el género dominante. Está escrito a mano a propósito:
+ * se busca el primer grupo cuyas palabras aparezcan en el nombre del género.
+ */
+const GENRE_NOTES: readonly { words: readonly string[]; note: string }[] = [
+  { words: ['hip hop', 'rap', 'trap', 'drill'], note: 'En el rap y el hip hop la positividad suele ser baja y las letras muy habladas: es parte del género, no un mal ánimo.' },
+  { words: ['reggaeton', 'urbano', 'dembow', 'latin'], note: 'Es música hecha para bailar: la bailabilidad alta es lo esperable.' },
+  { words: ['cumbia', 'cuarteto', 'salsa', 'merengue', 'bachata', 'tropical'], note: 'Ritmo y fiesta por definición: se espera mucha bailabilidad y buena onda.' },
+  { words: ['metal', 'punk', 'hardcore', 'grunge', 'hard rock'], note: 'Géneros de mucha energía y tono oscuro: la positividad baja no es tristeza, es actitud.' },
+  { words: ['rock'], note: 'El rock suele tener bastante energía y una positividad más bien media.' },
+  { words: ['electr', 'house', 'techno', 'edm', 'dance', 'trance'], note: 'Música electrónica: energía y bailabilidad suelen ir arriba, con poca letra.' },
+  { words: ['r&b', 'soul', 'funk'], note: 'El r&b y el soul combinan ritmo con un tono más sensual y relajado.' },
+  { words: ['jazz', 'blues', 'clasic', 'classical', 'ambient', 'lo-fi', 'lofi', 'chill', 'acoust', 'folk', 'bolero'], note: 'Género tranquilo: la energía baja es lo normal acá.' },
+  { words: ['indie', 'alternativ'], note: 'El indie y lo alternativo suelen moverse entre lo melancólico y lo soñador.' },
+  { words: ['pop'], note: 'El pop busca gustar: suele andar parejo en energía, ritmo y buen ánimo.' },
+];
+
+export function genreFlavor(genre: string): GenreFlavor {
+  const g = genre.toLowerCase();
+  const match = GENRE_NOTES.find((group) => group.words.some((w) => g.includes(w)));
+  return match ? { name: genre, note: match.note } : { name: genre, note: '' };
+}
+
+/** Tonalidad más repetida y reparto mayor/menor. Spotify usa key −1 y mode vacío cuando no hay dato. */
+export function computeTonality(tracks: readonly Track[]): Tonality | null {
+  const combos = new Map<string, number>();
+  const perKey = KEY_NAMES.map((label) => ({ label, count: 0 }));
+  let major = 0;
+  let known = 0;
+  for (const t of tracks) {
+    const key = t.key;
+    const mode = t.mode;
+    if (key === null || mode === null || !Number.isInteger(key) || key < 0 || key > 11 || (mode !== 0 && mode !== 1)) continue;
+    known += 1;
+    if (mode === 1) major += 1;
+    (perKey[key] as { count: number }).count += 1;
+    const id = `${key}:${mode}`;
+    combos.set(id, (combos.get(id) ?? 0) + 1);
+  }
+  if (known === 0) return null;
+  const [best] = [...combos.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  if (!best) return null;
+  const [keyText, modeText] = best[0].split(':');
+  const key = Number(keyText);
+  return {
+    favorite: { name: `${KEY_NAMES[key]} ${modeText === '1' ? 'mayor' : 'menor'}`, count: best[1] },
+    perKey,
+    favoriteKey: key,
+    majorShare: Math.round((major / known) * 100),
+    known,
+  };
 }
 
 // ───────────────────────── Cálculo ─────────────────────────
@@ -197,7 +275,7 @@ export function computeInsights(tracks: readonly Track[]): Insights {
   const topSongs = tracks
     .filter((t) => t.popularity !== null)
     .sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0) || a.name.localeCompare(b.name, 'es'))
-    .slice(0, 5)
+    .slice(0, 10)
     .map((t) => ref(t, t.popularity ?? 0));
 
   // Audio
@@ -208,8 +286,10 @@ export function computeInsights(tracks: readonly Track[]): Insights {
   const danceability = avgPct((t) => t.danceability);
   const energy = avgPct((t) => t.energy);
   const valence = avgPct((t) => t.valence);
+  const topGenre = ranked(genres, 1)[0];
+  const tonality = computeTonality(tracks);
   const audio =
-    danceability === null && energy === null && valence === null
+    danceability === null && energy === null && valence === null && tonality === null
       ? null
       : {
           danceability,
@@ -217,6 +297,8 @@ export function computeInsights(tracks: readonly Track[]): Insights {
           valence,
           mood: energy !== null && valence !== null ? moodVerdict(energy, valence) : null,
           dance: danceability !== null ? danceVerdict(danceability) : null,
+          genre: topGenre ? genreFlavor(topGenre.name) : null,
+          tonality,
         };
 
   // Tempo (un BPM de 0 es un dato faltante)
@@ -287,8 +369,8 @@ export function computeInsights(tracks: readonly Track[]): Insights {
     distinctArtists: artists.size,
     explicitShare,
     topArtists: ranked(artists, 10),
-    topGenres: ranked(genres, 5),
-    topAlbums: ranked(albums, 5, albumArtist),
+    topGenres: ranked(genres, 10),
+    topAlbums: ranked(albums, 10, albumArtist),
     popularity,
     topSongs,
     audio,

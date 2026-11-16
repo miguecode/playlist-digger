@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   computeInsights,
+  computeTonality,
+  genreFlavor,
   danceVerdict,
   tempoBuckets,
   durationVerdict,
@@ -120,5 +122,37 @@ describe('tempoBuckets', () => {
     const counts = tempoBuckets([70, 79.9, 80, 99, 100, 125, 140, 159, 160, 200]).map((b) => b.count);
     expect(counts).toEqual([2, 2, 1, 1, 2, 2]);
     expect(tempoBuckets([]).map((b) => b.label)).toEqual(['<80', '80–99', '100–119', '120–139', '140–159', '160+']);
+  });
+});
+
+describe('tonalidad', () => {
+  it('cuenta la tonalidad más repetida (nota + modo) y el reparto mayor/menor', () => {
+    const ton = computeTonality([
+      t({ key: 0, mode: 1 }),
+      t({ key: 0, mode: 1 }),
+      t({ key: 9, mode: 0 }),
+      t({ key: null, mode: null }),
+    ]);
+    expect(ton?.favorite).toEqual({ name: 'Do mayor', count: 2 });
+    expect(ton?.known).toBe(3);
+    expect(ton?.majorShare).toBe(67);
+    expect(ton?.perKey[9]).toEqual({ label: 'La', count: 1 });
+  });
+  it('ignora notas fuera de rango y devuelve null si no hay datos', () => {
+    expect(computeTonality([t({ key: -1, mode: 1 }), t({ key: 12, mode: 0 })])).toBeNull();
+  });
+});
+
+describe('género dominante', () => {
+  it('reconoce familias por palabra', () => {
+    expect(genreFlavor('hip hop old school').note).toMatch(/rap y el hip hop/);
+    expect(genreFlavor('rock argentino').note).toMatch(/rock/);
+  });
+  it('un género desconocido igual se informa, sin nota', () => {
+    expect(genreFlavor('xyz raro')).toEqual({ name: 'xyz raro', note: '' });
+  });
+  it('queda en el audio del resumen', () => {
+    const r = computeInsights([t({ genres: ['rap'], energy: 0.7, valence: 0.3, danceability: 0.6 })]);
+    expect(r.audio?.genre?.name).toBe('rap');
   });
 });

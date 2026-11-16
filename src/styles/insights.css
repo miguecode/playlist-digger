@@ -18,7 +18,7 @@
 
 .ins--slides {
   width: min(640px, calc(100vw - 24px));
-  height: min(760px, calc(100dvh - 24px));
+  height: min(880px, calc(100dvh - 24px));
 }
 
 .ins::backdrop {
@@ -633,8 +633,12 @@
 }
 
 .ins--slides .ins-card {
-  padding: 28px;
-  gap: 16px;
+  padding: 26px 28px;
+  gap: 14px;
+}
+
+.ins--slides .rank {
+  gap: 9px;
 }
 
 .ins--slides .ins-card__title {
@@ -669,6 +673,43 @@
 
 .ins-slide {
   animation: none;
+}
+
+.ins-hero .ins-note {
+  margin-top: 22px;
+}
+
+/* Vibra: género dominante y tonalidad */
+.ins-genre {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.22);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.ins-ton {
+  display: grid;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.ins-big--md {
+  font-size: clamp(2rem, 5vw, 2.75rem);
+}
+
+.hist--keys {
+  gap: 3px;
+}
+
+.hist--keys .hist__label {
+  font-size: 10px;
+}
+
+.hist--keys .hist__count {
+  min-height: 0;
 }
 
 @media (max-width: 760px) {

@@ -102,13 +102,14 @@ function artistsCard(data: Insights, anim: Animations): HTMLElement | null {
 
 function genresCard(data: Insights, anim: Animations): HTMLElement | null {
   if (data.topGenres.length === 0) return null;
-  return card('pink', 'Tus géneros top 5', rankList(data.topGenres, anim));
+  return card('pink', 'Géneros más repetidos', rankList(data.topGenres, anim));
 }
 
 function albumsCard(data: Insights, anim: Animations): HTMLElement | null {
-  // Si ningún álbum se repite, un ranking no dice nada.
-  if ((data.topAlbums[0]?.count ?? 0) < 2) return null;
-  return card('blue', 'Tus álbumes top 5', rankList(data.topAlbums, anim));
+  // Un álbum con una sola canción no es un ranking: solo entran los que se repiten.
+  const repeated = data.topAlbums.filter((a) => a.count >= 2);
+  if (repeated.length === 0) return null;
+  return card('blue', `Top ${repeated.length} álbumes`, rankList(repeated, anim));
 }
 
 function songsCard(data: Insights, anim: Animations): HTMLElement | null {
@@ -116,7 +117,7 @@ function songsCard(data: Insights, anim: Animations): HTMLElement | null {
   const items: Ranked[] = data.topSongs.map((t) => ({ name: t.name, count: t.value, detail: t.artist }));
   return card(
     'orange',
-    'Tus 5 canciones más populares',
+    `Top ${items.length} canciones más populares`,
     h('p', { class: 'ins-caption' }, 'Popularidad de 0 a 100'),
     rankList(items, anim, 100),
   );
@@ -142,15 +143,67 @@ function popularityCard(data: Insights, anim: Animations): HTMLElement | null {
   );
 }
 
+function tonalityBlock(audio: NonNullable<Insights['audio']>, anim: Animations): HTMLElement | null {
+  const ton = audio.tonality;
+  if (!ton) return null;
+  const max = Math.max(...ton.perKey.map((k) => k.count), 1);
+  const cols = ton.perKey.map((k, i) => {
+    const bar = h('span', { class: `hist__bar${i === ton.favoriteKey ? ' is-top' : ''}` });
+    anim.push(() => {
+      bar.style.height = k.count === 0 ? '3px' : `${Math.max(6, Math.round((k.count / max) * 100))}%`;
+    });
+    return h(
+      'div',
+      { class: 'hist__col' },
+      h('span', { class: 'hist__count' }, ''),
+      h('div', { class: 'hist__well' }, bar),
+      h('span', { class: 'hist__label hist__label--key' }, k.label),
+    );
+  });
+  const minorShare = 100 - ton.majorShare;
+  const majorSeg = h('span', { class: 'seg seg--medium', title: `Mayor: ${ton.majorShare}%` });
+  const minorSeg = h('span', { class: 'seg seg--long', title: `Menor: ${minorShare}%` });
+  anim.push(() => {
+    majorSeg.style.width = `${ton.majorShare}%`;
+    minorSeg.style.width = `${minorShare}%`;
+  });
+  return h(
+    'div',
+    { class: 'ins-ton' },
+    h('p', { class: 'ins-fact' }, 'Tonalidad más repetida'),
+    h('p', { class: 'ins-big ins-big--md' }, ton.favorite.name, h('small', {}, `${fmtNumber(ton.favorite.count)} ${ton.favorite.count === 1 ? 'canción' : 'canciones'}`)),
+    h('div', { class: 'hist hist--compact hist--keys' }, ...cols),
+    h('div', { class: 'stack' }, majorSeg, minorSeg),
+    h(
+      'ul',
+      { class: 'legend' },
+      h('li', {}, h('i', { class: 'dot dot--medium' }), `Mayor · ${ton.majorShare}% (más luminosa)`),
+      h('li', {}, h('i', { class: 'dot dot--long' }), `Menor · ${minorShare}% (más sentimental)`),
+    ),
+  );
+}
+
 function vibeCard(data: Insights, anim: Animations): HTMLElement | null {
   const audio = data.audio;
   if (!audio) return null;
+  const hasMeters = audio.danceability !== null || audio.energy !== null || audio.valence !== null;
   return card(
     'pink',
     'La vibra',
     audio.mood ? headline(audio.mood) : null,
-    h('div', { class: 'meters' }, meter('Bailabilidad', audio.danceability, anim), meter('Energía', audio.energy, anim), meter('Positividad', audio.valence, anim)),
+    audio.genre
+      ? h(
+          'p',
+          { class: 'ins-genre' },
+          h('strong', {}, `Género dominante: ${audio.genre.name}. `),
+          audio.genre.note,
+        )
+      : null,
+    hasMeters
+      ? h('div', { class: 'meters' }, meter('Bailabilidad', audio.danceability, anim), meter('Energía', audio.energy, anim), meter('Positividad', audio.valence, anim))
+      : null,
     audio.dance ? h('p', { class: 'ins-fact' }, `${audio.dance.label}: ${audio.dance.text}`) : null,
+    tonalityBlock(audio, anim),
   );
 }
 

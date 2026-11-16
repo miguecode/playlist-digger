@@ -1,12 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import floCsv from '../../fixtures/flo.csv?raw';
 import { CsvError, normalizeRelease, parseCsv } from './csv';
 
-describe('parseCsv con el CSV real de Exportify (flo)', () => {
-  const tracks = parseCsv(floCsv);
+// Exportify real, recortado a lo justo: BOM en el primer encabezado, comillas y varios artistas/géneros.
+const HEADER =
+  '\uFEFFTrack URI,ISRC,Track Name,Album Name,Artist Name(s),Release Date,Duration (ms),Popularity,Explicit,Added By,Added At,Genres,Record Label,Danceability,Energy,Key,Loudness,Mode,Speechiness,Acousticness,Instrumentalness,Liveness,Valence,Tempo,Time Signature';
+const SAMPLE = [
+  HEADER,
+  'spotify:track:1CcorUngVSo7k2GX8GLB53,GBUM72204191,"Feature Me","The Lead","Artista Uno",2022-07-08,201621,50,false,usuario-demo,2026-08-06T16:39:13Z,"género uno","Sello Uno",0.731,0.493,6,-4.96,0,0.0581,0.116,0.00000832,0.0619,0.852,127.03,4',
+  'spotify:track:36V3yQnFlfRarXVJbh17lE,GBUM72306256,"Pretty Eyes","Otro Álbum","Colab;Artista Uno",2023-07-03,176938,41,false,usuario-demo,2026-07-14T02:37:53Z,"género dos,género uno","Sello Dos",0.49,0.631,1,-5.612,1,0.0854,0.307,0,0.0928,0.631,71.593,3',
+].join('\n');
+
+describe('parseCsv con un CSV de Exportify', () => {
+  const tracks = parseCsv(SAMPLE);
 
   it('lee todas las canciones, aunque el primer encabezado traiga BOM', () => {
-    expect(tracks).toHaveLength(24);
+    expect(tracks).toHaveLength(2);
     expect(tracks[0]?.uri).toBe('spotify:track:1CcorUngVSo7k2GX8GLB53');
   });
 
@@ -16,12 +24,12 @@ describe('parseCsv con el CSV real de Exportify (flo)', () => {
       trackId: '1CcorUngVSo7k2GX8GLB53',
       name: 'Feature Me',
       album: 'The Lead',
-      artists: ['FLO'],
+      artists: ['Artista Uno'],
       releaseDate: '2022-07-08',
       durationMs: 201621,
       popularity: 50,
       explicit: false,
-      genres: ['r&b británico'],
+      genres: ['género uno'],
       tempo: 127.03,
       key: 6,
       mode: 0,
@@ -31,9 +39,8 @@ describe('parseCsv con el CSV real de Exportify (flo)', () => {
   });
 
   it('separa varios artistas (;) y varios géneros (,)', () => {
-    const pretty = tracks.find((t) => t.name.startsWith('Pretty Eyes'));
-    expect(pretty?.artists).toEqual(['sunkis', 'FLO']);
-    expect(pretty?.genres).toEqual(['r&b chino', 'r&b británico']);
+    expect(tracks[1]?.artists).toEqual(['Colab', 'Artista Uno']);
+    expect(tracks[1]?.genres).toEqual(['género dos', 'género uno']);
   });
 });
 
