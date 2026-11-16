@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="75%">
+      <stop offset="0" stop-color="#0b1a10"/>
+      <stop offset="1" stop-color="#030604"/>
+    </radialGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d0f0e"/>
+      <stop offset="1" stop-color="#060707"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="230" fill="url(#bg)"/>
+  <g transform="rotate(-9 470 520)">
+    <rect x="130" y="200" width="500" height="440" rx="48" fill="url(#card)" stroke="#2fe56f" stroke-opacity=".45" stroke-width="6"/>
+    <rect x="185" y="250" width="500" height="440" rx="48" fill="url(#card)" stroke="#2fe56f" stroke-opacity=".7" stroke-width="6"/>
+    <rect x="240" y="300" width="500" height="440" rx="48" fill="url(#card)" stroke="#2fe56f" stroke-width="7"/>
+    <circle cx="350" cy="410" r="88" fill="#34e47a"/>
+    <path transform="translate(284 350) scale(5)" fill="#07100a" d="M19 3v12.5a3.5 3.5 0 1 1-2-3.16V7.3L9 9v8.5a3.5 3.5 0 1 1-2-3.16V6z"/>
+    <rect x="470" y="345" width="215" height="28" rx="14" fill="#4b524e"/>
+    <rect x="470" y="398" width="85" height="28" rx="14" fill="#4b524e"/>
+    <rect x="285" y="540" width="250" height="28" rx="14" fill="#4b524e"/>
+    <rect x="295" y="595" width="230" height="28" rx="14" fill="#4b524e"/>
+    <rect x="305" y="650" width="200" height="28" rx="14" fill="#4b524e"/>
+  </g>
+  <g>
+    <line x1="790" y1="755" x2="878" y2="850" stroke="#34e47a" stroke-width="52" stroke-linecap="round"/>
+    <circle cx="690" cy="640" r="150" fill="#050806"/>
+    <circle cx="690" cy="640" r="150" fill="none" stroke="#34e47a" stroke-width="46"/>
+    <path d="M600 600v80l70-40z" fill="#34e47a" stroke="#34e47a" stroke-width="14" stroke-linejoin="round"/>
+    <rect x="700" y="590" width="100" height="26" rx="13" fill="#4b524e"/>
+    <rect x="705" y="640" width="100" height="26" rx="13" fill="#4b524e"/>
+    <rect x="640" y="690" width="90" height="24" rx="12" fill="#2a4a36"/>
+  </g>
+  <g stroke="#34e47a" stroke-width="16" stroke-linecap="round">
+    <line x1="835" y1="440" x2="858" y2="395"/>
+    <line x1="875" y1="475" x2="920" y2="445"/>
+  </g>
+</svg>

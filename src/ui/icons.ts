@@ -58,7 +58,9 @@ export function brandMark(size = 32): SVGSVGElement {
   const template = document.createElement('template');
   template.innerHTML =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="${size}" height="${size}" aria-hidden="true" focusable="false">` +
-    '<rect width="32" height="32" rx="8" fill="#1ed760"/><path fill="#121212" d="M7 16h4v9H7zm7-9h4v18h-4zm7 6h4v12h-4z"/></svg>';
+    '<rect width="32" height="32" rx="8" fill="#060a07"/><line x1="20" y1="20" x2="26" y2="26.2" stroke="#34e47a" stroke-width="3.4" stroke-linecap="round"/>' +
+    '<circle cx="14" cy="14" r="7.6" fill="#060a07" stroke="#34e47a" stroke-width="3"/>' +
+    '<path d="M12 10.6v6.8l5.6-3.4z" fill="#34e47a" stroke="#34e47a" stroke-width="1.2" stroke-linejoin="round"/></svg>';
   return template.content.firstElementChild as SVGSVGElement;
 }
 

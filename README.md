@@ -1,4 +1,4 @@
-# Playlist Viewer
+# PlaylistDigger
 
 Visor de playlists de Spotify exportadas a CSV con [Exportify](https://exportify.net/).
 Arrastrás el CSV y obtenés una tabla interactiva con búsqueda, orden, columnas a elección y filtros.
