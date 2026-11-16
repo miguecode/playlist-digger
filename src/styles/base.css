@@ -374,15 +374,15 @@ a.btn {
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: 8px;
-  height: 44px;
-  padding: 0 20px 0 16px;
+  gap: 10px;
+  height: 52px;
+  padding: 0 32px 0 24px;
   border: 0;
   border-radius: 999px;
-  background: linear-gradient(110deg, #1ed760 0%, #7ee8a8 50%, #f9a8d4 100%);
+  background: linear-gradient(110deg, #1ed760 0%, #62e3b0 50%, #7dd3fc 100%);
   color: #000;
   font: inherit;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 800;
   cursor: pointer;
   box-shadow: 0 6px 20px rgba(30, 215, 96, 0.25);
@@ -393,7 +393,7 @@ a.btn {
 
 .wrapped-btn:hover {
   transform: scale(1.04);
-  box-shadow: 0 8px 28px rgba(249, 168, 212, 0.35);
+  box-shadow: 0 8px 28px rgba(125, 211, 252, 0.35);
 }
 
 .wrapped-btn:focus-visible {

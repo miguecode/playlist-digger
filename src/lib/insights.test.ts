@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   computeInsights,
   danceVerdict,
+  tempoBuckets,
   durationVerdict,
   moodVerdict,
   popularityVerdict,
@@ -43,8 +44,13 @@ describe('computeInsights', () => {
     expect(r.audio?.valence).toBe(50);
     expect(r.audio?.mood?.label).toBe('Fiesta total');
   });
-  it('ignora un BPM de 0', () => {
+  it('ignora un BPM de 0 y marca la más rápida y la más lenta', () => {
     expect(r.tempo).toMatchObject({ average: 120, min: 100, max: 140 });
+    expect(r.tempo?.fastest).toEqual({ name: 'B', artist: 'Eminem', value: 140 });
+    expect(r.tempo?.slowest).toEqual({ name: 'A', artist: 'Eminem', value: 100 });
+  });
+  it('arma el ranking de canciones más populares', () => {
+    expect(r.topSongs.map((s) => [s.name, s.value])).toEqual([['A', 80], ['C', 70], ['B', 60]]);
   });
   it('duración: promedio, extremos y reparto por tipo', () => {
     expect(r.duration?.longest.value).toBe(400_000);
@@ -87,11 +93,11 @@ describe('computeInsights con datos faltantes', () => {
 
 describe('frases', () => {
   it('popularidad por tramos', () => {
-    expect(popularityVerdict(80).label).toBe('Pura fama');
-    expect(popularityVerdict(65).label).toBe('Muy popular');
+    expect(popularityVerdict(80).label).toBe('Súper mainstream');
+    expect(popularityVerdict(65).label).toBe('Bastante mainstream');
     expect(popularityVerdict(50).label).toBe('Equilibrada');
-    expect(popularityVerdict(35).label).toBe('Con onda edgy');
-    expect(popularityVerdict(10).label).toBe('Súper under');
+    expect(popularityVerdict(35).label).toBe('Un poco edgy');
+    expect(popularityVerdict(10).label).toBe('Muy edgy');
   });
   it('ánimo, baile, ritmo y duración', () => {
     expect(moodVerdict(80, 80).label).toBe('Fiesta total');
@@ -106,5 +112,13 @@ describe('frases', () => {
     expect(durationVerdict(200_000).label).toBe('Duración clásica');
     expect(durationVerdict(274_000).label).toBe('Duración clásica'); // 4:34, igual que la etiqueta «Media»
     expect(durationVerdict(300_000).label).toBe('Temas largos');
+  });
+});
+
+describe('tempoBuckets', () => {
+  it('reparte por tramos y deja los bordes en el tramo de arriba', () => {
+    const counts = tempoBuckets([70, 79.9, 80, 99, 100, 125, 140, 159, 160, 200]).map((b) => b.count);
+    expect(counts).toEqual([2, 2, 1, 1, 2, 2]);
+    expect(tempoBuckets([]).map((b) => b.label)).toEqual(['<80', '80–99', '100–119', '120–139', '140–159', '160+']);
   });
 });

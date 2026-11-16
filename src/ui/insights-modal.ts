@@ -3,6 +3,7 @@ import { computeInsights, type Insights, type Ranked, type TrackRef, type Verdic
 import type { Track } from '../types';
 import { h } from './dom';
 import { icon, starsRow } from './icons';
+import { renderShareImage, shareFileName } from './share-image';
 
 type Accent = 'green' | 'pink' | 'purple' | 'blue' | 'orange' | 'gold';
 type Child = Node | string | null;
@@ -24,8 +25,8 @@ const song = (t: TrackRef, value: string): HTMLElement =>
     h('span', { class: 'ins-song__meta' }, [t.artist, value].filter(Boolean).join(' · ')),
   );
 
-function rankList(items: readonly Ranked[], anim: Animations): HTMLElement {
-  const max = items[0]?.count ?? 1;
+function rankList(items: readonly Ranked[], anim: Animations, scale?: number): HTMLElement {
+  const max = scale ?? items[0]?.count ?? 1;
   return h(
     'ol',
     { class: 'rank' },
@@ -67,7 +68,7 @@ function meter(label: string, value: number | null, anim: Animations): HTMLEleme
 
 // ───────────────────────── Tarjetas ─────────────────────────
 
-function hero(name: string, data: Insights): HTMLElement {
+function hero(data: Insights, _anim: Animations, name: string): HTMLElement {
   const stat = (value: string, label: string): HTMLElement =>
     h('div', { class: 'ins-stat' }, h('span', { class: 'ins-stat__value' }, value), h('span', { class: 'ins-stat__label' }, label));
   const stats: HTMLElement[] = [
@@ -83,6 +84,7 @@ function hero(name: string, data: Insights): HTMLElement {
     h('h2', { class: 'ins-hero__title', id: 'ins-title' }, name),
     h('div', { class: 'ins-stats' }, ...stats),
     data.tags.length > 0 ? h('ul', { class: 'ins-tags' }, ...data.tags.map((tag) => h('li', {}, tag))) : null,
+    h('p', { class: 'ins-note' }, `Calculado con las ${fmtNumber(data.trackCount)} canciones de la playlist, sin filtros.`),
   );
 }
 
@@ -107,6 +109,17 @@ function albumsCard(data: Insights, anim: Animations): HTMLElement | null {
   // Si ningún álbum se repite, un ranking no dice nada.
   if ((data.topAlbums[0]?.count ?? 0) < 2) return null;
   return card('blue', 'Tus álbumes top 5', rankList(data.topAlbums, anim));
+}
+
+function songsCard(data: Insights, anim: Animations): HTMLElement | null {
+  if (data.topSongs.length === 0) return null;
+  const items: Ranked[] = data.topSongs.map((t) => ({ name: t.name, count: t.value, detail: t.artist }));
+  return card(
+    'orange',
+    'Tus 5 canciones más populares',
+    h('p', { class: 'ins-caption' }, 'Popularidad de 0 a 100'),
+    rankList(items, anim, 100),
+  );
 }
 
 function popularityCard(data: Insights, anim: Animations): HTMLElement | null {
@@ -141,15 +154,37 @@ function vibeCard(data: Insights, anim: Animations): HTMLElement | null {
   );
 }
 
-function tempoCard(data: Insights): HTMLElement | null {
+function tempoCard(data: Insights, anim: Animations): HTMLElement | null {
   const tempo = data.tempo;
   if (!tempo) return null;
+  const max = Math.max(...tempo.buckets.map((b) => b.count), 1);
+  const top = tempo.buckets.reduce((best, b) => (b.count > best.count ? b : best), tempo.buckets[0] ?? { label: '', count: 0 });
+  const cols = tempo.buckets.map((b) => {
+    const bar = h('span', { class: `hist__bar${b === top ? ' is-top' : ''}` });
+    anim.push(() => {
+      bar.style.height = b.count === 0 ? '3px' : `${Math.max(6, Math.round((b.count / max) * 100))}%`;
+    });
+    return h(
+      'div',
+      { class: 'hist__col' },
+      h('span', { class: 'hist__count' }, b.count > 0 ? fmtNumber(b.count) : ''),
+      h('div', { class: 'hist__well' }, bar),
+      h('span', { class: 'hist__label' }, b.label),
+    );
+  });
   return card(
     'blue',
     'El ritmo',
     h('p', { class: 'ins-big' }, String(tempo.average), h('small', {}, 'BPM promedio')),
     headline(tempo.verdict),
-    h('p', { class: 'ins-fact' }, `Del más lento (${tempo.min}) al más rápido (${tempo.max}).`),
+    h('p', { class: 'ins-caption' }, 'Canciones según su BPM'),
+    h('div', { class: 'hist hist--compact' }, ...cols),
+    h(
+      'div',
+      { class: 'ins-pair' },
+      h('div', {}, h('p', { class: 'ins-fact' }, 'La más rápida'), song(tempo.fastest, `${tempo.fastest.value} BPM`)),
+      h('div', {}, h('p', { class: 'ins-fact' }, 'La más lenta'), song(tempo.slowest, `${tempo.slowest.value} BPM`)),
+    ),
     h('p', { class: 'ins-note' }, 'El BPM es una estimación automática: a veces sale al doble o a la mitad.'),
   );
 }
@@ -204,7 +239,7 @@ function decadesCard(data: Insights, anim: Animations): HTMLElement | null {
   });
   return h(
     'section',
-    { class: 'ins-card ins-card--green ins-card--wide' },
+    { class: 'ins-card ins-card--green' },
     h('h3', { class: 'ins-card__title' }, 'Tu época'),
     headline(dec.verdict),
     h('div', { class: 'hist' }, ...cols),
@@ -219,56 +254,262 @@ function decadesCard(data: Insights, anim: Animations): HTMLElement | null {
 
 // ───────────────────────── Modal ─────────────────────────
 
-/** Ventana grande con un resumen «a lo Wrapped» de la playlist. Usa el <dialog> nativo (foco, Esc y fondo bloqueado). */
+type Mode = 'slides' | 'global';
+type Builder = (data: Insights, anim: Animations, name: string) => HTMLElement | null;
+
+/** Orden de las tarjetas: es el de las slides y el de la vista global. */
+const BUILDERS: readonly Builder[] = [
+  hero,
+  artistsCard,
+  genresCard,
+  albumsCard,
+  songsCard,
+  popularityCard,
+  vibeCard,
+  tempoCard,
+  durationCard,
+  decadesCard,
+];
+
+const EASE = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
+const SWIPE_MIN_PX = 48;
+
+const prefersReducedMotion = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+
+/** Anima y espera a que termine (o se cancele). Con «reducir movimiento» no anima. */
+async function play(target: Element, frames: Keyframe[], ms: number, pseudo?: string): Promise<void> {
+  if (prefersReducedMotion() || typeof target.animate !== 'function') return;
+  const options: KeyframeAnimationOptions & { pseudoElement?: string } = { duration: ms, easing: EASE, fill: 'both' };
+  if (pseudo) options.pseudoElement = pseudo;
+  try {
+    await target.animate(frames, options).finished;
+  } catch {
+    /* animación cancelada: no pasa nada */
+  }
+}
+
+/** Ventana con un resumen «a lo Wrapped»: slides de a una, o todas juntas en la vista global. */
 export class InsightsModal {
   private readonly dialog: HTMLDialogElement;
-  private readonly content: HTMLElement;
+  private readonly body = h('div', { class: 'ins__body' });
+  private readonly nav = h('footer', { class: 'ins__nav' });
+  private readonly dots = h('div', { class: 'ins__dots', role: 'tablist', 'aria-label': 'Tarjetas del resumen' });
+  private readonly prevBtn: HTMLButtonElement;
+  private readonly nextBtn: HTMLButtonElement;
+  private readonly modeBtn: HTMLButtonElement;
+  private readonly saveBtn: HTMLButtonElement;
+  private readonly status = h('p', { class: 'ins__status', role: 'status' });
+
+  private name = '';
+  private data: Insights | null = null;
+  private mode: Mode = 'slides';
+  private index = 0;
+  private count = 0;
+  private token = 0;
+  private closing = false;
+  private touchX: number | null = null;
 
   constructor() {
-    this.content = h('div', { class: 'ins__scroll' });
-    const close = h(
-      'button',
-      { class: 'icon-btn ins__close', type: 'button', 'aria-label': 'Cerrar resumen', onclick: () => this.close() },
-      icon('close', 20),
-    );
-    this.dialog = h('dialog', { class: 'ins', 'aria-labelledby': 'ins-title' }, close, this.content) as HTMLDialogElement;
-    // Un clic en el fondo oscuro llega al propio <dialog>.
+    this.prevBtn = h('button', { class: 'ins__arrow', type: 'button', 'aria-label': 'Tarjeta anterior', onclick: () => this.step(-1) }, icon('chevronLeft', 26)) as HTMLButtonElement;
+    this.nextBtn = h('button', { class: 'ins__arrow', type: 'button', 'aria-label': 'Tarjeta siguiente', onclick: () => this.step(1) }, icon('chevronRight', 26)) as HTMLButtonElement;
+    this.modeBtn = h('button', { class: 'ins__pill', type: 'button', onclick: () => void this.toggleMode() }) as HTMLButtonElement;
+    this.saveBtn = h('button', { class: 'ins__pill', type: 'button', onclick: () => void this.saveImage() }) as HTMLButtonElement;
+    this.saveBtn.append(icon('download', 18), h('span', { class: 'ins__pill-label' }, 'Descargar imagen'));
+    const close = h('button', { class: 'icon-btn ins__close', type: 'button', 'aria-label': 'Cerrar resumen', onclick: () => void this.close() }, icon('close', 20));
+
+    const bar = h('header', { class: 'ins__bar' }, h('span', { class: 'ins__bar-title' }, 'Resumen'), this.modeBtn, this.saveBtn, close);
+    this.nav.append(this.prevBtn, this.dots, this.nextBtn);
+    this.dialog = h('dialog', { class: 'ins', 'aria-label': 'Resumen de tu playlist' }, bar, this.body, this.status, this.nav) as HTMLDialogElement;
+
     this.dialog.addEventListener('click', (ev) => {
-      if (ev.target === this.dialog) this.close();
+      if (ev.target === this.dialog) void this.close();
     });
+    // Esc: se intercepta para poder animar el cierre.
+    this.dialog.addEventListener('cancel', (ev) => {
+      ev.preventDefault();
+      void this.close();
+    });
+    this.dialog.addEventListener('keydown', (ev) => {
+      if (this.mode !== 'slides') return;
+      if (ev.key === 'ArrowRight') this.step(1);
+      else if (ev.key === 'ArrowLeft') this.step(-1);
+      else return;
+      ev.preventDefault();
+    });
+    this.body.addEventListener('touchstart', (ev) => {
+      this.touchX = ev.touches[0]?.clientX ?? null;
+    }, { passive: true });
+    this.body.addEventListener('touchend', (ev) => {
+      const start = this.touchX;
+      this.touchX = null;
+      const end = ev.changedTouches[0]?.clientX;
+      if (this.mode !== 'slides' || start === null || end === undefined) return;
+      if (Math.abs(end - start) >= SWIPE_MIN_PX) this.step(end < start ? 1 : -1);
+    }, { passive: true });
     document.body.append(this.dialog);
   }
 
   open(name: string, tracks: readonly Track[]): void {
-    const data = computeInsights(tracks);
-    const anim: Animations = [];
-    const col = (...cards: (HTMLElement | null)[]): HTMLElement => h('div', { class: 'ins__col' }, ...cards.filter((c) => c !== null));
-    const grid = h(
-      'div',
-      { class: 'ins__grid' },
-      col(artistsCard(data, anim)),
-      col(genresCard(data, anim), albumsCard(data, anim)),
-      popularityCard(data, anim),
-      vibeCard(data, anim),
-      tempoCard(data),
-      durationCard(data, anim),
-      decadesCard(data, anim),
-    );
-    this.content.replaceChildren(
-      hero(name, data),
-      grid,
-      h('p', { class: 'ins__foot' }, `Calculado con las ${fmtNumber(data.trackCount)} canciones de la playlist, sin filtros.`),
-    );
+    this.name = name;
+    this.data = computeInsights(tracks);
+    this.mode = 'slides';
+    this.index = 0;
+    this.closing = false;
+    this.setStatus('');
+    this.count = this.build().length;
+    this.renderDots();
 
     if (typeof this.dialog.showModal === 'function') this.dialog.showModal();
     else this.dialog.setAttribute('open', '');
-    this.content.scrollTop = 0;
-    // Dos cuadros de espera: las barras parten de cero y recién después se llenan (si no, no hay animación).
-    requestAnimationFrame(() => requestAnimationFrame(() => anim.forEach((run) => run())));
+    void play(this.dialog, [{ opacity: 0, transform: 'translateY(18px) scale(0.97)' }, { opacity: 1, transform: 'none' }], 320);
+    void play(this.dialog, [{ opacity: 0 }, { opacity: 1 }], 320, '::backdrop');
+    void this.render(0);
   }
 
-  close(): void {
+  async close(): Promise<void> {
+    if (this.closing || !this.dialog.open) return;
+    this.closing = true;
+    this.token++;
+    await Promise.all([
+      play(this.dialog, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(14px) scale(0.97)' }], 220),
+      play(this.dialog, [{ opacity: 1 }, { opacity: 0 }], 220, '::backdrop'),
+    ]);
+    this.dialog.getAnimations({ subtree: false }).forEach((a) => a.cancel());
     if (typeof this.dialog.close === 'function') this.dialog.close();
     else this.dialog.removeAttribute('open');
+    this.closing = false;
+  }
+
+  /** Construye todas las tarjetas, cada una con sus propias animaciones de barras. */
+  private build(): Array<{ el: HTMLElement; anim: Animations }> {
+    const out: Array<{ el: HTMLElement; anim: Animations }> = [];
+    for (const b of BUILDERS) {
+      const anim: Animations = [];
+      const el = b(this.data as Insights, anim, this.name);
+      if (el) out.push({ el, anim });
+    }
+    return out;
+  }
+
+  private step(delta: 1 | -1): void {
+    if (this.mode !== 'slides') return;
+    const next = this.index + delta;
+    if (next < 0) return;
+    if (next >= this.count) void this.setMode('global'); // se terminaron las slides: vista global
+    else void this.render(next, delta);
+  }
+
+  private async toggleMode(): Promise<void> {
+    await this.setMode(this.mode === 'slides' ? 'global' : 'slides');
+  }
+
+  private async setMode(mode: Mode): Promise<void> {
+    this.mode = mode;
+    if (mode === 'slides') this.index = 0;
+    await this.render(this.index, 1, true);
+  }
+
+  private async render(index: number, dir: 1 | -1 = 1, modeChange = false): Promise<void> {
+    const data = this.data;
+    if (!data) return;
+    const token = ++this.token;
+    const slides = this.mode === 'slides';
+    const shift = slides && !modeChange;
+
+    const current = this.body.firstElementChild;
+    if (current) {
+      const out = shift ? `translateX(${-dir * 36}px)` : 'scale(0.97)';
+      await play(current, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: out }], 180);
+      if (token !== this.token) return;
+    }
+
+    this.index = index;
+    const anim: Animations = [];
+    let view: HTMLElement;
+    if (slides) {
+      const slide = this.build()[index];
+      if (!slide) return;
+      view = h('div', { class: 'ins__stage' }, slide.el);
+      anim.push(...slide.anim);
+    } else {
+      const col = (...els: Array<HTMLElement | null>): HTMLElement => h('div', { class: 'ins__col' }, ...els.filter((e): e is HTMLElement => e !== null));
+      const header = hero(data, anim, this.name);
+      view = h(
+        'div',
+        { class: 'ins__scroll' },
+        header,
+        h(
+          'div',
+          { class: 'ins__grid' },
+          col(artistsCard(data, anim), songsCard(data, anim)),
+          col(genresCard(data, anim), albumsCard(data, anim)),
+          popularityCard(data, anim),
+          vibeCard(data, anim),
+          tempoCard(data, anim),
+          durationCard(data, anim),
+          decadesCard(data, anim),
+        ),
+      );
+    }
+    this.dialog.classList.toggle('ins--slides', slides);
+    this.dialog.classList.toggle('ins--global', !slides);
+    this.body.replaceChildren(view);
+    this.nav.hidden = !slides;
+    this.updateControls();
+
+    // Dos cuadros de espera: las barras parten de cero y recién después se llenan (si no, no hay animación).
+    requestAnimationFrame(() => requestAnimationFrame(() => anim.forEach((run) => run())));
+    await play(view, [{ opacity: 0, transform: shift ? `translateX(${dir * 36}px)` : 'scale(0.97)' }, { opacity: 1, transform: 'none' }], 320);
+  }
+
+  private updateControls(): void {
+    const slides = this.mode === 'slides';
+    this.prevBtn.disabled = this.index === 0;
+    // En la última slide, «siguiente» lleva a la vista global.
+    this.nextBtn.setAttribute('aria-label', this.index === this.count - 1 ? 'Ir a la vista global' : 'Tarjeta siguiente');
+    this.modeBtn.replaceChildren(icon(slides ? 'grid' : 'slideshow', 18), h('span', { class: 'ins__pill-label' }, slides ? 'Vista global' : 'Ver de a una'));
+    this.modeBtn.title = slides ? 'Ver todas las tarjetas juntas' : 'Volver a ver las tarjetas de a una';
+    this.dots.querySelectorAll('button').forEach((dot, i) => {
+      dot.classList.toggle('is-active', i === this.index);
+      dot.setAttribute('aria-selected', String(i === this.index));
+    });
+  }
+
+  private renderDots(): void {
+    this.dots.replaceChildren(
+      ...Array.from({ length: this.count }, (_, i) =>
+        h('button', { class: 'ins__dot', type: 'button', role: 'tab', 'aria-label': `Tarjeta ${i + 1} de ${this.count}`, onclick: () => void this.goTo(i) }),
+      ),
+    );
+  }
+
+  private async goTo(i: number): Promise<void> {
+    if (this.mode !== 'slides' || i === this.index) return;
+    await this.render(i, i > this.index ? 1 : -1);
+  }
+
+  private setStatus(msg: string): void {
+    this.status.textContent = msg;
+    this.status.hidden = msg === '';
+  }
+
+  private async saveImage(): Promise<void> {
+    if (!this.data || this.saveBtn.disabled) return;
+    this.saveBtn.disabled = true;
+    this.setStatus('Preparando la imagen…');
+    try {
+      const blob = await renderShareImage(this.name, this.data);
+      const url = URL.createObjectURL(blob);
+      const a = h('a', { href: url, download: shareFileName(this.name) });
+      document.body.append(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      this.setStatus('¡Listo! La imagen se descargó.');
+    } catch {
+      this.setStatus('No se pudo generar la imagen. Probá de nuevo.');
+    } finally {
+      this.saveBtn.disabled = false;
+    }
   }
 }

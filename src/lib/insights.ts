@@ -53,7 +53,18 @@ export interface Insights {
     mood: Verdict | null;
     dance: Verdict | null;
   } | null;
-  tempo: { average: number; min: number; max: number; verdict: Verdict } | null;
+  /** Las canciones más populares (hasta 5). */
+  topSongs: TrackRef[];
+  tempo: {
+    average: number;
+    min: number;
+    max: number;
+    fastest: TrackRef;
+    slowest: TrackRef;
+    /** Canciones por tramo de BPM, de lento a rápido. */
+    buckets: { label: string; count: number }[];
+    verdict: Verdict;
+  } | null;
   duration: {
     averageMs: number;
     longest: TrackRef;
@@ -69,11 +80,11 @@ export interface Insights {
 // ───────────────────────── Frases según los números ─────────────────────────
 
 export function popularityVerdict(average: number): Verdict {
-  if (average >= 75) return { label: 'Pura fama', text: '¡Tu playlist está llena de hits! Casi todo lo que escuchás lo conoce medio mundo.' };
-  if (average >= 60) return { label: 'Muy popular', text: '¡Tus canciones son muy populares! Mezclás hits con algún que otro tesoro.' };
+  if (average >= 75) return { label: 'Súper mainstream', text: '¡Tu playlist está llena de hits! Casi todo lo que escuchás lo conoce medio mundo.' };
+  if (average >= 60) return { label: 'Bastante mainstream', text: '¡Tus canciones son muy populares! Mezclás hits con algún que otro tesoro.' };
   if (average >= 45) return { label: 'Equilibrada', text: 'Ni puro hit ni puro under: un buen balance entre lo conocido y lo que no tanto.' };
-  if (average >= 30) return { label: 'Con onda edgy', text: 'Tu playlist es bastante edgy: escuchás cosas que no conoce todo el mundo.' };
-  return { label: 'Súper under', text: '¡Muy edgy! Casi nadie más escucha lo que tenés en esta playlist.' };
+  if (average >= 30) return { label: 'Un poco edgy', text: 'Escuchás cosas que no conoce todo el mundo: tu playlist tiene su toque edgy.' };
+  return { label: 'Muy edgy', text: '¡Casi nadie más escucha lo que tenés en esta playlist!' };
 }
 
 export function moodVerdict(energy: number, valence: number): Verdict {
@@ -134,6 +145,18 @@ function extreme(tracks: readonly Track[], value: (t: Track) => number | null, p
   return best ? ref(best.t, best.v) : null;
 }
 
+/** Tramos de BPM para el histograma: <80, 80–99, 100–119, 120–139, 140–159 y 160+. */
+export function tempoBuckets(bpms: readonly number[]): { label: string; count: number }[] {
+  const edges = [80, 100, 120, 140, 160];
+  const buckets = [`<${edges[0]}`, ...edges.slice(0, -1).map((e, i) => `${e}–${(edges[i + 1] ?? 0) - 1}`), `${edges[edges.length - 1]}+`].map((label) => ({ label, count: 0 }));
+  for (const bpm of bpms) {
+    const i = edges.findIndex((edge) => bpm < edge);
+    const bucket = buckets[i === -1 ? buckets.length - 1 : i];
+    if (bucket) bucket.count += 1;
+  }
+  return buckets;
+}
+
 const yearOf = (t: Track): number | null => (t.releaseDate ? Number(t.releaseDate.slice(0, 4)) : null);
 
 export function computeInsights(tracks: readonly Track[]): Insights {
@@ -171,6 +194,12 @@ export function computeInsights(tracks: readonly Track[]): Insights {
         }
       : null;
 
+  const topSongs = tracks
+    .filter((t) => t.popularity !== null)
+    .sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0) || a.name.localeCompare(b.name, 'es'))
+    .slice(0, 5)
+    .map((t) => ref(t, t.popularity ?? 0));
+
   // Audio
   const avgPct = (pick: (t: Track) => number | null): number | null => {
     const m = mean(tracks.map(pick).filter((v): v is number => v !== null));
@@ -193,10 +222,20 @@ export function computeInsights(tracks: readonly Track[]): Insights {
   // Tempo (un BPM de 0 es un dato faltante)
   const bpms = tracks.map((t) => t.tempo).filter((v): v is number => v !== null && v > 0);
   const bpmAverage = mean(bpms);
+  const fastest = extreme(tracks, (t) => (t.tempo && t.tempo > 0 ? t.tempo : null), 'max');
+  const slowest = extreme(tracks, (t) => (t.tempo && t.tempo > 0 ? t.tempo : null), 'min');
   const tempo =
-    bpmAverage === null
+    bpmAverage === null || !fastest || !slowest
       ? null
-      : { average: Math.round(bpmAverage), min: Math.round(Math.min(...bpms)), max: Math.round(Math.max(...bpms)), verdict: tempoVerdict(bpmAverage) };
+      : {
+          average: Math.round(bpmAverage),
+          min: Math.round(Math.min(...bpms)),
+          max: Math.round(Math.max(...bpms)),
+          fastest: { ...fastest, value: Math.round(fastest.value) },
+          slowest: { ...slowest, value: Math.round(slowest.value) },
+          buckets: tempoBuckets(bpms),
+          verdict: tempoVerdict(bpmAverage),
+        };
 
   // Duración
   const durations = tracks.map((t) => t.durationMs).filter((v): v is number => v !== null && v > 0);
@@ -251,6 +290,7 @@ export function computeInsights(tracks: readonly Track[]): Insights {
     topGenres: ranked(genres, 5),
     topAlbums: ranked(albums, 5, albumArtist),
     popularity,
+    topSongs,
     audio,
     tempo,
     duration,

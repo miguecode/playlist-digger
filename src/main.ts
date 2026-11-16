@@ -122,7 +122,7 @@ btnOpen.prepend(icon('upload', 18));
 byId('step-exportify').prepend(icon('external', 16));
 byId('link-github').prepend(icon('github', 16));
 byId('link-spotify').prepend(spotifyMark(16));
-byId('btn-insights').prepend(icon('sparkle', 20));
+byId('btn-insights').prepend(icon('sparkle', 24));
 byId('topbar-github').prepend(icon('github', 18));
 btnExport.append(icon('download', 18), h('span', { class: 'btn__label' }, 'Exportar CSV'));
 btnExport.title = 'Descarga las canciones y columnas que ves ahora';
