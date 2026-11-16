@@ -91,6 +91,26 @@ describe('CoverLoader', () => {
     expect(peak).toBeLessThanOrEqual(2);
   });
 
+  it('lo que se ve pasa antes que la precarga', async () => {
+    const order: string[] = [];
+    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+      order.push(decodeURIComponent(String(input)).split('/track/')[1] ?? '');
+      await new Promise((r) => setTimeout(r, 2));
+      return ok('https://i.scdn.co/image/a');
+    });
+    const loader = new CoverLoader({ fetchFn, concurrency: 1 });
+    const ids = ['a', 'b', 'c', 'd'].map((c) => `${ID.slice(0, 21)}${c}`);
+    const jobs = [
+      loader.request(ids[0] as string, () => true, false), // sale ya: hay un lugar libre
+      loader.request(ids[1] as string, () => true, false),
+      loader.request(ids[2] as string, () => true, false),
+      loader.request(ids[3] as string), // urgente: se cuela antes de las precargas que esperan
+    ];
+    await Promise.all(jobs);
+    expect(order[0]).toBe(ids[0]);
+    expect(order[1]).toBe(ids[3]);
+  });
+
   it('guarda y recupera desde el almacenamiento de la pestaña', async () => {
     const data = new Map<string, string>();
     const storage = {

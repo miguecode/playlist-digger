@@ -68,7 +68,7 @@ export class CoverLoader {
    * Pide la carátula. `wanted` se consulta justo antes de salir a la red: si el elemento ya no está en pantalla
    * (por ejemplo, se scrolleó rápido) el pedido se descarta y se resuelve con undefined, sin recordarlo.
    */
-  request(trackId: string, wanted: () => boolean = () => true): Promise<string | null | undefined> {
+  request(trackId: string, wanted: () => boolean = () => true, urgent = true): Promise<string | null | undefined> {
     if (!TRACK_ID.test(trackId)) return Promise.resolve(null);
     const known = this.peek(trackId);
     if (known !== undefined) return Promise.resolve(known);
@@ -76,7 +76,9 @@ export class CoverLoader {
     if (inFlight) return inFlight;
 
     const promise = new Promise<string | null | undefined>((resolve) => {
-      this.queue.push({ id: trackId, wanted, resolve });
+      // Lo que se ve va primero; lo que se adelanta (precarga) espera su turno.
+      if (urgent) this.queue.unshift({ id: trackId, wanted, resolve });
+      else this.queue.push({ id: trackId, wanted, resolve });
     }).finally(() => this.pending.delete(trackId));
     this.pending.set(trackId, promise);
     this.pump();

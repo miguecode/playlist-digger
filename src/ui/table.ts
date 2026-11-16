@@ -3,6 +3,7 @@ import { columnHelp } from '../lib/help';
 import type { SortState } from '../lib/sort';
 import type { Track } from '../types';
 import { renderCell } from './cells';
+import { prefetchCovers } from './cover';
 import { h } from './dom';
 import { icon } from './icons';
 import { fitChips } from './chips';
@@ -11,6 +12,8 @@ import { hideInfoTip, infoTip } from './info-tip';
 const ROW_H = 52;
 const HEAD_H = 40;
 const OVERSCAN = 8;
+/** Filas que se precargan (carátulas) más allá de las que ya se dibujan. */
+const PREFETCH_ROWS = 20;
 
 /**
  * Tabla con scroll virtual: solo se dibujan las filas que se ven (más un margen),
@@ -180,6 +183,7 @@ export class VirtualTable {
     }
     this.rowsEl.replaceChildren(fragment);
     fitChips(this.rowsEl);
+    if (this.columns.some((col) => col.kind === 'title')) prefetchCovers(this.rows.slice(end, end + PREFETCH_ROWS));
   }
 
   private renderRow(track: Track, index: number): HTMLElement {

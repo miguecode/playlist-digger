@@ -41,3 +41,18 @@ export function coverElement(track: Track, className = 'cover'): HTMLElement {
   }
   return box;
 }
+
+let prefetchRun = 0;
+
+/**
+ * Pide por adelantado las carátulas de las canciones que están por aparecer al scrollear.
+ * Va detrás de lo que se ve y se descarta sola si, mientras espera, se vuelve a llamar (el usuario ya se movió).
+ */
+export function prefetchCovers(tracks: readonly Track[]): void {
+  const run = ++prefetchRun;
+  for (const track of tracks) {
+    if (track.trackId && loader.peek(track.trackId) === undefined) {
+      void loader.request(track.trackId, () => run === prefetchRun, false);
+    }
+  }
+}

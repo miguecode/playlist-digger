@@ -1,7 +1,7 @@
 import { COLUMNS } from '../lib/columns';
 import type { Track } from '../types';
 import { renderCell } from './cells';
-import { coverElement } from './cover';
+import { coverElement, prefetchCovers } from './cover';
 import { h, highlight } from './dom';
 
 /** Medidas de la grilla (tienen que coincidir con .cards__* en cards.css). */
@@ -9,6 +9,8 @@ export const CARD_H = 148;
 export const CARD_GAP = 12;
 export const CARD_MIN_W = 280;
 const OVERSCAN_ROWS = 3;
+/** Filas de tarjetas que se precargan más allá de las que ya se dibujan. */
+const PREFETCH_ROWS = 4;
 
 /** Cuántas tarjetas entran por fila en `width` px y cuántas filas hacen falta. */
 export function gridMetrics(width: number, count: number): { cols: number; rows: number } {
@@ -92,6 +94,7 @@ export class CardGrid {
       if (track) fragment.append(this.card(track));
     }
     this.rowsEl.replaceChildren(fragment);
+    prefetchCovers(this.tracks.slice(end, end + this.cols * PREFETCH_ROWS));
   }
 
   private card(track: Track): HTMLElement {
