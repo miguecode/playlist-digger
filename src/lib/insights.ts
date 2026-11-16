@@ -7,10 +7,14 @@ export interface Ranked {
   count: number;
   /** Texto de apoyo (por ejemplo, el artista de un álbum). */
   detail?: string;
+  /** Solo en rankings de canciones: para mostrar la carátula. */
+  trackId?: string | null;
 }
 
 /** Una canción destacada con el valor que la destaca (popularidad, duración o año). */
 export interface TrackRef {
+  /** ID de Spotify de la canción (null si es un archivo local), para mostrar su carátula. */
+  trackId: string | null;
   name: string;
   artist: string;
   value: number;
@@ -234,7 +238,7 @@ const bump = (counts: Map<string, number>, key: string): void => {
 const mean = (values: readonly number[]): number | null =>
   values.length === 0 ? null : values.reduce((sum, v) => sum + v, 0) / values.length;
 
-const ref = (t: Track, value: number): TrackRef => ({ name: t.name, artist: t.artists[0] ?? '', value });
+const ref = (t: Track, value: number): TrackRef => ({ trackId: t.trackId, name: t.name, artist: t.artists[0] ?? '', value });
 
 /** Extremo (mayor o menor) de una lista de canciones según un valor numérico. */
 function extreme(tracks: readonly Track[], value: (t: Track) => number | null, pick: 'max' | 'min'): TrackRef | null {

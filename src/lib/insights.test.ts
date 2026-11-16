@@ -39,7 +39,7 @@ describe('computeInsights', () => {
   });
   it('promedia popularidad y marca la más popular', () => {
     expect(r.popularity?.average).toBe(70);
-    expect(r.popularity?.top).toEqual({ name: 'A', artist: 'Eminem', value: 80 });
+    expect(r.popularity?.top).toMatchObject({ name: 'A', artist: 'Eminem', value: 80 });
     expect(r.popularity?.hitsShare).toBe(67);
   });
   it('promedia audio en porcentaje y calcula el ánimo', () => {

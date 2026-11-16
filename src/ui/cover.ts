@@ -18,9 +18,9 @@ const loader = new CoverLoader({
  * Carátula de una canción: un ícono de nota mientras carga (o si no hay imagen) y la imagen cuando llega.
  * Es decorativa: el nombre de la canción ya está en el texto de al lado.
  */
-export function coverElement(track: Track, className = 'cover'): HTMLElement {
+export function coverElement(track: { trackId?: string | null }, className = 'cover'): HTMLElement {
   const box = h('span', { class: className, 'aria-hidden': 'true' }, icon('note', 24));
-  const id = track.trackId;
+  const id = track.trackId ?? null;
   if (!id) return box;
 
   const show = (url: string | null | undefined): void => {

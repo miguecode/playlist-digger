@@ -1,6 +1,7 @@
 import { DURATION_LABELS, displayGenre, fmtNumber, formatDuration, formatTotalDuration, type DurationClass } from '../lib/format';
 import { computeInsights, type Insights, type Ranked, type TrackRef, type Verdict } from '../lib/insights';
 import type { Track } from '../types';
+import { coverElement } from './cover';
 import { h } from './dom';
 import { icon, starsRow } from './icons';
 import { play } from './motion';
@@ -21,10 +22,15 @@ const headline = (verdict: Verdict): HTMLElement =>
 
 const song = (t: TrackRef, value: string): HTMLElement =>
   h(
-    'p',
+    'div',
     { class: 'ins-song' },
-    h('span', { class: 'ins-song__name', title: t.name }, t.name),
-    h('span', { class: 'ins-song__meta' }, [t.artist, value].filter(Boolean).join(' · ')),
+    t.trackId ? coverElement(t, 'cover ins-song__cover') : null,
+    h(
+      'p',
+      { class: 'ins-song__text' },
+      h('span', { class: 'ins-song__name', title: t.name }, t.name),
+      h('span', { class: 'ins-song__meta' }, [t.artist, value].filter(Boolean).join(' · ')),
+    ),
   );
 
 function rankList(items: readonly Ranked[], anim: Animations, scale?: number): HTMLElement {
@@ -43,6 +49,7 @@ function rankList(items: readonly Ranked[], anim: Animations, scale?: number): H
         'li',
         { class: 'rank__item' },
         h('span', { class: 'rank__pos' }, String(i + 1)),
+        item.trackId ? coverElement({ trackId: item.trackId }, 'cover rank__cover') : null,
         h(
           'span',
           { class: 'rank__main' },
@@ -141,7 +148,7 @@ function albumsCard(data: Insights, anim: Animations): HTMLElement | null {
 
 function songsCard(data: Insights, anim: Animations): HTMLElement | null {
   if (data.topSongs.length === 0) return null;
-  const items: Ranked[] = data.topSongs.map((t) => ({ name: t.name, count: t.value, detail: t.artist }));
+  const items: Ranked[] = data.topSongs.map((t) => ({ name: t.name, count: t.value, detail: t.artist, trackId: t.trackId }));
   return card(
     'orange',
     `Top ${items.length} canciones más populares`,

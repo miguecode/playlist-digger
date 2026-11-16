@@ -364,10 +364,57 @@
 }
 
 .ins-song {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  min-width: 0;
+}
+
+.ins-song__text {
   display: grid;
+  flex: 1;
   gap: 0;
   margin: 0;
   min-width: 0;
+}
+
+/* Carátulas sobre las tarjetas de color: fondo translúcido en vez del gris de la tabla */
+.ins-song__cover,
+.rank__cover {
+  background: rgba(0, 0, 0, 0.28);
+  color: inherit;
+}
+
+.ins-song__cover {
+  width: 52px;
+  height: 52px;
+}
+
+.ins--slides .ins-song__cover {
+  width: 64px;
+  height: 64px;
+}
+
+.ins--slides .ins-highlight .ins-song__cover {
+  width: 84px;
+  height: 84px;
+}
+
+.rank__cover {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+}
+
+.rank__cover svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ins--slides .rank__cover {
+  width: 40px;
+  height: 40px;
 }
 
 .ins-song__name {
@@ -436,6 +483,10 @@
   opacity: 0.88;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.rank__item:has(.rank__cover) {
+  grid-template-columns: 28px auto minmax(0, 1fr) auto;
 }
 
 .rank__item:first-child .rank__pos {
