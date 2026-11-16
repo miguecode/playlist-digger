@@ -34,6 +34,10 @@ export class SimpleDialog {
     document.body.append(this.dialog);
   }
 
+  setTitle(text: string): void {
+    this.titleEl.textContent = text;
+  }
+
   open(): void {
     this.closing = false;
     if (typeof this.dialog.showModal === 'function') this.dialog.showModal();

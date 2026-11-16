@@ -1,28 +1,16 @@
 import type { Column } from '../lib/columns';
 import { columnHelp } from '../lib/help';
-import { cellText } from '../lib/search';
 import type { SortState } from '../lib/sort';
-import { trackUrl } from '../lib/spotify';
 import type { Track } from '../types';
-import { h, highlight } from './dom';
-import { icon, starsRow } from './icons';
+import { renderCell } from './cells';
+import { h } from './dom';
+import { icon } from './icons';
 import { fitChips } from './chips';
-import { bindTip, hideInfoTip, infoTip } from './info-tip';
+import { hideInfoTip, infoTip } from './info-tip';
 
 const ROW_H = 52;
 const HEAD_H = 40;
 const OVERSCAN = 8;
-
-/** «E» de contenido explícito, a la derecha de la canción; al pasar el mouse explica qué significa. */
-function explicitTag(): HTMLElement {
-  const tag = h(
-    'button',
-    { class: 'tag-e', type: 'button', 'aria-label': 'Explícita: qué significa', 'aria-expanded': 'false' },
-    'E',
-  );
-  bindTip(tag, 'Explícita', columnHelp('explicit') ?? '');
-  return tag;
-}
 
 /**
  * Tabla con scroll virtual: solo se dibujan las filas que se ven (más un margen),
@@ -204,103 +192,7 @@ export class VirtualTable {
     return row;
   }
 
-  /** Celda de texto con enlaces a Spotify (uno por artista); null si no corresponde. */
-  private renderLinked(col: Column, track: Track): Node | null {
-    const items = this.linksOn ? (col.links?.(track) ?? []) : [];
-    if (!items.some((item) => item.url)) return null;
-    const nodes: Node[] = [];
-    items.forEach((item, i) => {
-      if (i > 0) nodes.push(document.createTextNode(', '));
-      nodes.push(
-        item.url
-          ? h(
-              'a',
-              {
-                class: 'cell-link',
-                href: item.url,
-                target: '_blank',
-                rel: 'noopener noreferrer',
-                title: `Buscar «${item.text}» en Spotify`,
-              },
-              highlight(item.text, this.terms),
-            )
-          : highlight(item.text, this.terms),
-      );
-    });
-    return h('span', { class: 'cell-text' }, ...nodes);
-  }
-
   private renderCell(col: Column, track: Track): Node {
-    const text = cellText(col, track);
-    if (text === '' && col.kind !== 'index') {
-      return col.unknown
-        ? h('span', { class: 'muted unknown' }, col.unknown)
-        : h('span', { class: 'muted', 'aria-label': 'sin dato' }, '–');
-    }
-
-    switch (col.kind) {
-      case 'index':
-        return h('span', { class: 'cell-index' }, highlight(text, this.terms));
-
-      case 'title': {
-        const url = this.linksOn ? trackUrl(track) : null;
-        const content = highlight(text, this.terms);
-        const title = url
-          ? h(
-              'a',
-              {
-                class: 'cell-title',
-                href: url,
-                target: '_blank',
-                rel: 'noopener noreferrer',
-                title: `${text} · abrir en Spotify`,
-              },
-              content,
-            )
-          : h('span', { class: 'cell-title', title: text }, content);
-        return track.explicit ? h('div', { class: 'title-cell' }, title, explicitTag()) : title;
-      }
-
-      case 'num': {
-        const value = h('span', { class: 'cell-num' }, highlight(text, this.terms));
-        const tag = col.tag?.(track);
-        return tag ? h('div', { class: 'num-tag' }, h('span', { class: `tag tag--${tag.tone}` }, tag.label), value) : value;
-      }
-
-      case 'bar': {
-        const fill = h('div', { class: 'bar__fill' });
-        fill.style.width = `${Math.round((col.bar?.(track) ?? 0) * 100)}%`;
-        return h(
-          'div',
-          { class: 'bar' },
-          h('span', { class: 'bar__value' }, highlight(text, this.terms)),
-          h('div', { class: 'bar__track' }, fill),
-        );
-      }
-
-      case 'stars': {
-        const fraction = Math.min(1, Math.max(0, col.bar?.(track) ?? 0));
-        const fill = h('span', { class: 'stars__fill' }, starsRow());
-        fill.style.width = `${fraction * 100}%`;
-        return h(
-          'div',
-          { class: 'stars', role: 'img', 'aria-label': `${col.label}: ${text} de 100` },
-          h('span', { class: 'stars__value' }, highlight(text, this.terms)),
-          h('span', { class: 'stars__row' }, h('span', { class: 'stars__base' }, starsRow()), fill),
-        );
-      }
-
-      case 'chips':
-        return h(
-          'div',
-          { class: 'chips', 'data-label': col.label },
-          ...(col.items?.(track) ?? []).map((item) =>
-            h('span', { class: 'chip' }, highlight(item, this.terms)),
-          ),
-        );
-
-      default:
-        return this.renderLinked(col, track) ?? h('span', { class: 'cell-text', title: text }, highlight(text, this.terms));
-    }
+    return renderCell(col, track, { terms: this.terms, linksOn: this.linksOn });
   }
 }

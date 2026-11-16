@@ -5,19 +5,14 @@ import './styles/filters.css';
 import './styles/landing.css';
 import './styles/insights.css';
 import './styles/dialogs.css';
+import './styles/cards.css';
 
 import { columnsWithData, exportColumns, type Column } from './lib/columns';
 import { CsvError, parseCsv } from './lib/csv';
 import { extraCopies, findDuplicates, type DuplicateGroup } from './lib/duplicates';
 import { EXAMPLES, exampleSummary, exampleUrl, type Example } from './lib/examples';
 import { toCsv } from './lib/export';
-import {
-  compileFilters,
-  describeFilters,
-  emptyFilters,
-  removeFilter,
-  type FilterState,
-} from './lib/filters';
+import { compileFilters, describeFilters, emptyFilters, removeFilter, type FilterState } from './lib/filters';
 import { fmtNumber, formatTotalDuration } from './lib/format';
 import { matchesQuery } from './lib/search';
 import { nextSort, sortTracks, type SortState } from './lib/sort';
@@ -44,6 +39,8 @@ import { InsightsModal } from './ui/insights-modal';
 import { hideInfoTip, infoTip } from './ui/info-tip';
 import { brandMark, icon, spotifyMark } from './ui/icons';
 import { ShortcutsModal } from './ui/shortcuts-modal';
+import { CardGrid } from './ui/card-grid';
+import { TrackModal } from './ui/track-modal';
 import { VirtualTable } from './ui/table';
 
 /** Un CSV de Exportify pesa unos KB; algo mucho más grande no es una playlist. */
@@ -110,6 +107,14 @@ const chipsRow = byId('active-filters');
 const status = byId('status');
 const tableHost = byId('table-host');
 const empty = byId('empty');
+const cardsHost = byId('cards-host');
+const btnView = byId('btn-view');
+const btnFocus = byId('btn-focus');
+const btnFocusExit = byId('btn-focus-exit');
+const sortbox = byId('sortbox');
+const sortSelect = byId<HTMLSelectElement>('sort-select');
+const sortDir = byId<HTMLButtonElement>('sort-dir');
+const appRoot = byId('app');
 const overlay = byId('drop-overlay');
 const toast = byId('toast');
 
@@ -169,6 +174,9 @@ const table = new VirtualTable((col) => {
   update(true);
 });
 tableHost.append(table.element);
+const trackModal = new TrackModal();
+const cards = new CardGrid((track) => trackModal.open(track, app.shown, linksOn));
+cardsHost.append(cards.element);
 applyLinks(linksOn);
 switchLinks.addEventListener('click', () => {
   applyLinks(!linksOn);
@@ -206,6 +214,81 @@ const columnsMenu = new ColumnsMenu(byId('columns-host'), {
   },
 });
 
+// ───────────────────────── Vista: tabla o tarjetas, y modo «solo la lista» ─────────────────────────
+
+type View = 'table' | 'cards';
+const VIEW_KEY = 'playlist-viewer:view';
+let view: View = loadJson<unknown>(VIEW_KEY) === 'cards' ? 'cards' : 'table';
+
+function applyView(next: View): void {
+  view = next;
+  const cardsOn = next === 'cards';
+  btnView.replaceChildren(
+    icon(cardsOn ? 'list' : 'cards', 18),
+    h('span', { class: 'btn__label' }, cardsOn ? 'Ver tabla' : 'Ver tarjetas'),
+  );
+  btnView.title = cardsOn ? 'Cambiar a la vista de tabla' : 'Cambiar a la vista de tarjetas';
+  btnView.setAttribute('aria-label', btnView.title);
+  btnView.setAttribute('aria-pressed', String(cardsOn));
+}
+
+/** En tarjetas no hay encabezados para ordenar: se ordena con este selector. */
+function renderSortbox(shown: readonly Column[]): void {
+  sortbox.hidden = view !== 'cards';
+  if (view !== 'cards') return;
+  const sortable = shown.filter((col) => col.kind !== 'index');
+  sortSelect.replaceChildren(
+    h('option', { value: '' }, 'Orden original'),
+    ...sortable.map((col) => h('option', { value: col.key }, col.label)),
+  );
+  sortSelect.value = app.sort?.key ?? '';
+  const desc = app.sort?.dir === 'desc';
+  sortDir.disabled = !app.sort;
+  sortDir.replaceChildren(icon('arrow', 16));
+  sortDir.classList.toggle('is-desc', desc);
+  sortDir.title = desc ? 'Descendente (tocá para invertir)' : 'Ascendente (tocá para invertir)';
+  sortDir.setAttribute('aria-label', sortDir.title);
+}
+
+sortSelect.addEventListener('change', () => {
+  const col = app.shown.find((c) => c.key === sortSelect.value);
+  app.sort = col ? { key: col.key, dir: col.defaultDir } : null;
+  update(true);
+});
+sortDir.addEventListener('click', () => {
+  if (!app.sort) return;
+  app.sort = {
+    key: app.sort.key,
+    dir: app.sort.dir === 'asc' ? 'desc' : 'asc',
+  };
+  update(true);
+});
+
+btnView.addEventListener('click', () => {
+  applyView(view === 'cards' ? 'table' : 'cards');
+  saveJson(VIEW_KEY, view);
+  update(false);
+});
+applyView(view);
+
+// «Solo la lista»: en el celular oculta todo lo de arriba (solo se aplica con pantalla angosta; no se recuerda entre visitas)
+const narrow = window.matchMedia('(max-width: 760px)');
+btnFocus.append(icon('hideTop', 20));
+btnFocusExit.append(icon('showTop', 18), h('span', {}, 'Mostrar todo'));
+
+function setFocus(on: boolean): void {
+  appRoot.classList.toggle('is-focus', on && narrow.matches);
+  btnFocusExit.hidden = !(on && narrow.matches);
+}
+btnFocus.addEventListener('click', () => setFocus(true));
+btnFocusExit.addEventListener('click', () => {
+  setFocus(false);
+  btnFocus.focus();
+});
+narrow.addEventListener('change', () => {
+  if (!narrow.matches) setFocus(false);
+});
+
 // ───────────────────────── Actualización de la vista ─────────────────────────
 
 function plural(n: number): string {
@@ -234,8 +317,11 @@ function update(resetScroll: boolean): void {
   app.rows = rows;
   app.shown = shown;
 
-  table.setData(rows, shown, app.sort, terms, resetScroll);
-  tableHost.hidden = rows.length === 0;
+  if (view === 'cards') cards.setData(rows, terms, resetScroll);
+  else table.setData(rows, shown, app.sort, terms, resetScroll);
+  tableHost.hidden = view === 'cards' || rows.length === 0;
+  cardsHost.hidden = view !== 'cards' || rows.length === 0;
+  renderSortbox(shown);
   empty.hidden = rows.length !== 0;
 
   // El total de la playlist ya está en el encabezado: acá solo se informa cuando hay algo filtrado.
@@ -363,7 +449,9 @@ function paintFullscreen(): void {
 if (document.fullscreenEnabled) {
   paintFullscreen();
   btnFullscreen.addEventListener('click', () => {
-    const request = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+    const request = document.fullscreenElement
+      ? document.exitFullscreen()
+      : document.documentElement.requestFullscreen();
     request.catch(() => showToast('Tu navegador no permitió la pantalla completa.', true));
   });
   document.addEventListener('fullscreenchange', paintFullscreen);
@@ -391,7 +479,8 @@ document.addEventListener('keydown', (ev) => {
   if (workspace.hidden) return;
   const target = ev.target;
   const typing =
-    target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
+    target instanceof HTMLElement &&
+    (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
 
   const plain = !ev.ctrlKey && !ev.metaKey && !ev.altKey;
   const dialogOpen = document.querySelector('dialog[open]') !== null;
@@ -428,10 +517,16 @@ function showToast(message: string, error = false): void {
 }
 
 function playlistName(fileName: string): string {
-  return fileName.replace(/\.csv$/i, '').replace(/_+/g, ' ').trim() || 'Playlist';
+  return (
+    fileName
+      .replace(/\.csv$/i, '')
+      .replace(/_+/g, ' ')
+      .trim() || 'Playlist'
+  );
 }
 
 function openPlaylist(name: string, tracks: Track[]): void {
+  setFocus(false);
   const columns = columnsWithData(tracks);
   app.data = { name, tracks, columns };
   app.sort = null;
@@ -444,7 +539,8 @@ function openPlaylist(name: string, tracks: Track[]): void {
   heroOwner = likelyOwner(tracks.map((t) => t.addedBy));
   updateHeroLink();
   const duration = totalDuration(tracks);
-  heroMeta.textContent = duration > 0 ? `${plural(tracks.length)} · ${formatTotalDuration(duration)}` : plural(tracks.length);
+  heroMeta.textContent =
+    duration > 0 ? `${plural(tracks.length)} · ${formatTotalDuration(duration)}` : plural(tracks.length);
   document.title = `${name} · Playlist Viewer`;
   duplicates = findDuplicates(tracks);
   const extra = extraCopies(duplicates);
@@ -564,7 +660,16 @@ async function openCsv(name: string, text: string, origin: Origin): Promise<void
     } else {
       const id = historyId(name);
       try {
-        await saveToHistory({ id, name, savedAt: Date.now(), tracks: tracks.length, durationMs: totalDuration(tracks) }, text);
+        await saveToHistory(
+          {
+            id,
+            name,
+            savedAt: Date.now(),
+            tracks: tracks.length,
+            durationMs: totalDuration(tracks),
+          },
+          text,
+        );
         currentHistoryId = id;
         rememberCurrent({ kind: 'history', id });
       } catch {
@@ -595,6 +700,7 @@ async function openFromHistory(entry: HistoryEntry): Promise<void> {
 
 /** Vuelve a la pantalla inicial (el logo). */
 function goHome(): void {
+  setFocus(false);
   rememberCurrent(null);
   currentHistoryId = null;
   hideInfoTip();
@@ -648,7 +754,10 @@ async function fetchExample(example: Example): Promise<string> {
 /** Abre una playlist de ejemplo: se pide a la propia app (mismo origen). Los ejemplos no van al historial. */
 async function loadExample(example: Example): Promise<void> {
   try {
-    await openCsv(example.title, await fetchExample(example), { kind: 'example', id: example.id });
+    await openCsv(example.title, await fetchExample(example), {
+      kind: 'example',
+      id: example.id,
+    });
   } catch {
     showToast('No se pudo abrir el ejemplo. Probá de nuevo o elegí tu propio CSV.', true);
   }
@@ -658,9 +767,18 @@ const examplesList = byId('examples-list');
 for (const example of EXAMPLES) {
   const button = h(
     'button',
-    { class: 'example', type: 'button', 'aria-label': `Abrir el ejemplo ${example.title}` },
+    {
+      class: 'example',
+      type: 'button',
+      'aria-label': `Abrir el ejemplo ${example.title}`,
+    },
     h('span', { class: `example__cover example__cover--${example.accent}` }, icon('note', 26)),
-    h('span', { class: 'example__body' }, h('span', { class: 'example__title' }, example.title), h('span', { class: 'example__meta' }, exampleSummary(example))),
+    h(
+      'span',
+      { class: 'example__body' },
+      h('span', { class: 'example__title' }, example.title),
+      h('span', { class: 'example__meta' }, exampleSummary(example)),
+    ),
     h('span', { class: 'example__go' }, icon('play', 20)),
   );
   button.addEventListener('click', () => {
@@ -749,8 +867,16 @@ btnExport.addEventListener('click', () => {
     showToast('No hay canciones para exportar con los filtros actuales.', true);
     return;
   }
-  const slug = data.name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '') || 'playlist';
-  const url = URL.createObjectURL(new Blob([toCsv(exportColumns(app.shown, app.rows), app.rows)], { type: 'text/csv;charset=utf-8' }));
+  const slug =
+    data.name
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, '-')
+      .replace(/^-+|-+$/g, '') || 'playlist';
+  const url = URL.createObjectURL(
+    new Blob([toCsv(exportColumns(app.shown, app.rows), app.rows)], {
+      type: 'text/csv;charset=utf-8',
+    }),
+  );
   const link = h('a', { href: url, download: `${slug}-vista.csv` });
   document.body.append(link);
   link.click();

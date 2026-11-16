@@ -1,0 +1,236 @@
+/* ───────────── Vista de tarjetas ─────────────
+   CARD_H (148) y CARD_GAP (12) tienen que coincidir con ui/card-grid.ts. */
+.cards {
+  height: 100%;
+}
+
+.cards__scroll {
+  height: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 0 12px;
+}
+
+.cards__inner {
+  position: relative;
+}
+
+.cards__rows {
+  display: grid;
+  gap: 12px;
+  will-change: transform;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 148px;
+  padding: 14px 16px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--surface-2);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.card:hover {
+  background: var(--surface-3);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+.card__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.card__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card__e {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  background: #b3b3b3;
+  color: #121212;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.card__artists,
+.card__album {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card__artists {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.card__album {
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.card__foot .stars {
+  width: auto;
+}
+
+.card__foot .stars__value {
+  width: auto;
+}
+
+/* ───────────── Detalle de una canción ───────────── */
+.tdet__lead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  color: var(--text-2);
+}
+
+.tdet__open {
+  margin-bottom: 16px;
+}
+
+.tdet {
+  display: grid;
+  grid-template-columns: minmax(96px, 36%) minmax(0, 1fr);
+  gap: 10px 16px;
+  margin: 0;
+}
+
+.tdet dt {
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.tdet dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.tdet .chips {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+.tdet .cell-title,
+.tdet .cell-text,
+.tdet .cell-link {
+  white-space: normal;
+}
+
+/* ───────────── Orden en tarjetas ───────────── */
+.sortbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sortbox__label {
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.sortbox__select {
+  height: 36px;
+  max-width: 160px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--field);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.sortbox__dir.is-desc svg {
+  transform: rotate(180deg);
+}
+
+/* ───────────── «Solo la lista» (solo celular) ───────────── */
+.toolbar__focus,
+.focus-exit {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .toolbar__focus {
+    display: inline-flex;
+    margin-left: -6px;
+  }
+
+  .sortbox__label {
+    display: none;
+  }
+
+  .app.is-focus .topbar,
+  .app.is-focus .hero,
+  .app.is-focus .toolbar,
+  .app.is-focus .chips-row,
+  .app.is-focus .status,
+  .app.is-focus .filters {
+    display: none;
+  }
+
+  .app.is-focus .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .focus-exit:not([hidden]) {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 20;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 40px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 500px;
+    background: var(--green);
+    color: #000;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+  }
+
+  .app.is-focus {
+    padding-top: 8px;
+  }
+}

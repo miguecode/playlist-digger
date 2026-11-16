@@ -195,7 +195,14 @@
                   <button class="icon-btn search__clear" id="search-clear" type="button" aria-label="Borrar búsqueda" hidden></button>
                 </label>
                 <button class="icon-btn toolbar__keys" id="btn-shortcuts" type="button" aria-label="Atajos de teclado" title="Atajos de teclado ( ? )"></button>
+                <button class="icon-btn toolbar__focus" id="btn-focus" type="button" aria-label="Ocultar todo menos la lista" title="Ver solo la lista"></button>
                 <div class="toolbar__actions">
+                  <div class="sortbox" id="sortbox" hidden>
+                    <label class="sortbox__label" for="sort-select">Ordenar</label>
+                    <select class="sortbox__select" id="sort-select" aria-label="Ordenar por"></select>
+                    <button class="icon-btn sortbox__dir" id="sort-dir" type="button"></button>
+                  </div>
+                  <button class="btn btn--ghost" id="btn-view" type="button"></button>
                   <div class="switch-wrap" id="switch-wrap">
                     <button class="switch" id="switch-links" type="button" role="switch" aria-checked="true">
                       <span class="switch__track" aria-hidden="true"><span class="switch__knob"></span></span>
@@ -212,6 +219,7 @@
               <p class="status" id="status" aria-live="polite"></p>
 
               <div class="table-host" id="table-host"></div>
+              <div class="table-host" id="cards-host" hidden></div>
               <div class="empty" id="empty" hidden>
                 <p class="empty__title">Ninguna canción coincide</p>
                 <p class="empty__text">Probá con otra búsqueda o quitá algunos filtros.</p>
@@ -219,6 +227,7 @@
               </div>
             </section>
           </div>
+          <button class="focus-exit" id="btn-focus-exit" type="button" hidden></button>
           <div class="backdrop" id="backdrop" hidden></div>
         </section>
       </main>
