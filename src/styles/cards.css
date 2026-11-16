@@ -205,9 +205,34 @@
   .toolbar__focus {
     display: inline-flex;
     margin-left: -6px;
+    background: var(--green);
+    color: #000;
+  }
+
+  .toolbar__focus:hover {
+    background: var(--green-hover);
   }
 
   .sortbox__label {
+    display: none;
+  }
+
+  /* Selector de orden a todo el ancho */
+  .toolbar__actions {
+    width: 100%;
+  }
+
+  .sortbox {
+    flex: 1 1 100%;
+  }
+
+  .sortbox__select {
+    flex: 1;
+    max-width: none;
+  }
+
+  /* En el celular los enlaces están siempre activados: sin interruptor */
+  .switch-wrap {
     display: none;
   }
 

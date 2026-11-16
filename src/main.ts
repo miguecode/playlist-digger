@@ -151,7 +151,9 @@ const SWITCH_HELP =
 // Interruptor «Enlaces»: activa o desactiva todos los enlaces de la tabla (se recuerda entre visitas)
 const LINKS_KEY = 'playlist-viewer:spotify-links';
 const switchLinks = byId<HTMLButtonElement>('switch-links');
-let linksOn = loadJson<unknown>(LINKS_KEY) !== false;
+const narrowScreen = window.matchMedia('(max-width: 760px)');
+// En el celular no hay interruptor: los enlaces siempre están activados (lo guardado solo vale en pantallas anchas)
+let linksOn = narrowScreen.matches || loadJson<unknown>(LINKS_KEY) !== false;
 
 let heroOwner: string | null = null;
 
@@ -220,7 +222,11 @@ const columnsMenu = new ColumnsMenu(byId('columns-host'), {
 
 type View = 'table' | 'cards';
 const VIEW_KEY = 'playlist-viewer:view';
-let view: View = loadJson<unknown>(VIEW_KEY) === 'cards' ? 'cards' : 'table';
+const VIEW_KEY_MOBILE = 'playlist-viewer:view-mobile';
+// Celular: tarjetas por defecto (se respeta si el usuario eligió tabla). Escritorio: tabla por defecto.
+const viewKey = (): string => (narrowScreen.matches ? VIEW_KEY_MOBILE : VIEW_KEY);
+const savedView = loadJson<unknown>(viewKey());
+let view: View = savedView === 'cards' || (savedView === null && narrowScreen.matches) ? 'cards' : 'table';
 
 function applyView(next: View): void {
   view = next;
@@ -267,7 +273,7 @@ sortDir.addEventListener('click', () => {
 function chooseView(next: View): void {
   if (next === view) return;
   applyView(next);
-  saveJson(VIEW_KEY, view);
+  saveJson(viewKey(), view);
   update(false);
 }
 viewTable.addEventListener('click', () => chooseView('table'));
@@ -275,7 +281,7 @@ viewCards.addEventListener('click', () => chooseView('cards'));
 applyView(view);
 
 // «Solo la lista»: en el celular oculta todo lo de arriba (solo se aplica con pantalla angosta; no se recuerda entre visitas)
-const narrow = window.matchMedia('(max-width: 760px)');
+const narrow = narrowScreen;
 btnFocus.append(icon('hideTop', 20));
 btnFocusExit.append(icon('showTop', 18), h('span', {}, 'Mostrar todo'));
 
@@ -289,6 +295,7 @@ btnFocusExit.addEventListener('click', () => {
   btnFocus.focus();
 });
 narrow.addEventListener('change', () => {
+  applyLinks(narrow.matches || loadJson<unknown>(LINKS_KEY) !== false);
   if (!narrow.matches) setFocus(false);
 });
 

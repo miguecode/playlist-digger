@@ -358,6 +358,29 @@ input[type='checkbox']:disabled {
   font-size: 13px;
 }
 
+@media (max-width: 760px) {
+  /* En el celular el menú de columnas se ancla a la barra entera (no al botón): ocupa el ancho y no se corta */
+  .popover-host {
+    position: static;
+  }
+
+  .toolbar {
+    position: relative;
+  }
+
+  .popover:not(.popover--history) {
+    top: 100%;
+    left: 16px;
+    right: 16px;
+    width: auto;
+  }
+
+  /* Que el pie («Mostrar todas» / «Restablecer») no quede cortado por el borde de la pantalla */
+  .popover:not(.popover--history) .popover__list {
+    max-height: max(150px, calc(100dvh - 500px));
+  }
+}
+
 @media (max-width: 640px) {
   .popover--history {
     position: fixed;
