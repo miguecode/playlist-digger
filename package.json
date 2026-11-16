@@ -1,5 +1,5 @@
 {
-  "name": "playlistdigger",
+  "name": "playlist-digger",
   "private": true,
   "version": "1.0.0",
   "description": "Visor de playlists exportadas a CSV (Exportify) con tabla interactiva, búsqueda y filtros.",
