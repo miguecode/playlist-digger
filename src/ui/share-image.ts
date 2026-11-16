@@ -1,6 +1,7 @@
-import { APP_NAME } from '../lib/app';
+import { APP_HOST, APP_NAME } from '../lib/app';
 import { displayGenre, fmtNumber, formatDuration, formatTotalDuration } from '../lib/format';
 import type { Insights, Ranked } from '../lib/insights';
+import { coverImage } from './cover';
 
 /** Imagen vertical (formato «historia») con lo más importante del resumen, lista para guardar y compartir. */
 const W = 1080;
@@ -150,10 +151,17 @@ const ranking = (title: string, items: readonly Ranked[]): Section => ({
   },
 });
 
-/** Datos sueltos en cuadritos de dos columnas (BPM, duración, época, tonalidad). */
-function tiles(items: readonly { value: string; label: string }[]): Section {
+interface Featured {
+  name: string;
+  artist: string;
+  cover: HTMLImageElement | null;
+}
+
+/** Datos sueltos en cuadritos de dos columnas (época, duración) y, abajo, la canción más popular con su carátula si hay. */
+function tiles(items: readonly { value: string; label: string }[], featured: Featured | null): Section {
   const rows = Math.ceil(items.length / 2);
-  const height = 96 + rows * 132 + 16;
+  const FEATURED_H = 128;
+  const height = 96 + rows * 132 + (featured ? FEATURED_H + 8 : 0) + 16;
   return {
     height,
     draw: (ctx, y) => {
@@ -170,46 +178,37 @@ function tiles(items: readonly { value: string; label: string }[]): Section {
         font(ctx, 700, 26);
         ctx.fillText(fit(ctx, item.label, colWidth - 24), x, rowY + 90);
       });
-    },
-  };
-}
+      if (!featured) return;
 
-function songsSection(data: Insights): Section | null {
-  const items = data.topSongs.slice(0, 3);
-  if (items.length === 0) return null;
-  const height = 96 + items.length * 100 + 16;
-  return {
-    height,
-    draw: (ctx, y) => {
-      panel(ctx, y, height, 'Canciones más populares');
-      const left = PAD + 40;
-      const right = W - PAD - 40;
-      items.forEach((song, i) => {
-        const rowY = y + 96 + i * 100;
-        ctx.textAlign = 'left';
-        ctx.fillStyle = i === 0 ? '#ffffff' : 'rgba(255,255,255,0.65)';
-        font(ctx, 900, 40);
-        ctx.fillText(String(i + 1), left, rowY + 44);
-        font(ctx, 800, 34);
-        const score = String(song.value);
-        const scoreWidth = ctx.measureText(score).width;
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(fit(ctx, song.name, right - left - 70 - scoreWidth - 24), left + 70, rowY + 36);
-        ctx.fillStyle = 'rgba(255,255,255,0.75)';
-        font(ctx, 600, 28);
-        ctx.fillText(fit(ctx, song.artist, right - left - 70 - scoreWidth - 24), left + 70, rowY + 72);
-        ctx.fillStyle = '#ffffff';
-        font(ctx, 800, 34);
-        ctx.textAlign = 'right';
-        ctx.fillText(score, right, rowY + 36);
-        ctx.textAlign = 'left';
-      });
+      const x = PAD + 40;
+      const rowY = y + 96 + rows * 132 + 8;
+      const maxWidth = W - PAD * 2 - 80;
+      const size = 112;
+      let textX = x;
+      if (featured.cover) {
+        ctx.save();
+        roundRect(ctx, x, rowY, size, size, 18);
+        ctx.clip();
+        ctx.drawImage(featured.cover, x, rowY, size, size);
+        ctx.restore();
+        textX = x + size + 28;
+      }
+      ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      font(ctx, 700, 26);
+      ctx.fillText('Canción más popular', textX, rowY + 28);
+      ctx.fillStyle = '#ffffff';
+      font(ctx, 900, 46);
+      ctx.fillText(fit(ctx, featured.name, maxWidth - (textX - x)), textX, rowY + 76);
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      font(ctx, 700, 30);
+      ctx.fillText(fit(ctx, featured.artist, maxWidth - (textX - x)), textX, rowY + 112);
     },
   };
 }
 
 /** Arma los paneles según los datos que haya; la imagen crece (hasta un tope) para que entren. */
-function buildSections(data: Insights): Section[] {
+function buildSections(data: Insights, featured: Featured | null): Section[] {
   const sections: Section[] = [];
   if (data.topArtists.length > 0) sections.push(ranking('Artistas más repetidos', data.topArtists.slice(0, 5)));
   if (data.topGenres.length > 0) {
@@ -217,11 +216,9 @@ function buildSections(data: Insights): Section[] {
   }
 
   const facts: { value: string; label: string }[] = [];
-  if (data.tempo) facts.push({ value: `${data.tempo.average} BPM`, label: data.tempo.verdict.label });
-  if (data.duration) facts.push({ value: formatDuration(data.duration.averageMs), label: 'Duración promedio' });
   if (data.decades) facts.push({ value: data.decades.favorite.label, label: 'Época favorita' });
-  if (data.audio?.tonality) facts.push({ value: data.audio.tonality.favorite.name, label: 'Tonalidad más repetida' });
-  if (facts.length > 0) sections.push(tiles(facts));
+  if (data.duration) facts.push({ value: formatDuration(data.duration.averageMs), label: 'Duración promedio' });
+  if (facts.length > 0 || featured) sections.push(tiles(facts, featured));
 
   const meters: { label: string; value: number }[] = [];
   if (data.audio?.danceability != null) meters.push({ label: 'Bailabilidad', value: data.audio.danceability });
@@ -239,8 +236,6 @@ function buildSections(data: Insights): Section[] {
     });
   }
 
-  const songs = songsSection(data);
-  if (songs) sections.push(songs);
   return sections;
 }
 
@@ -252,6 +247,12 @@ export async function renderShareImage(name: string, data: Insights): Promise<Bl
   } catch {
     /* si no carga, se usa la tipografía del sistema */
   }
+
+  // La canción más popular lleva su carátula si se consigue a tiempo; si no, va solo el texto.
+  const top = data.topSongs[0];
+  const featured: Featured | null = top
+    ? { name: top.name, artist: top.artist, cover: top.trackId ? await coverImage(top.trackId) : null }
+    : null;
 
   const canvas = document.createElement('canvas');
   canvas.width = W;
@@ -287,10 +288,10 @@ export async function renderShareImage(name: string, data: Insights): Promise<Bl
   const headerHeight = 130 + 30 + title.size + 56 + 140 + (data.tags.length > 0 ? tagRows() * 76 - 16 + 48 : 0);
 
   // Entran los paneles en orden de prioridad hasta el tope de alto; el resto se omite.
-  const FOOTER = 130;
+  const FOOTER = 170;
   const sections: Section[] = [];
   let total = headerHeight + FOOTER;
-  for (const section of buildSections(data)) {
+  for (const section of buildSections(data, featured)) {
     if (total + section.height + GAP > MAX_H) break;
     sections.push(section);
     total += section.height + GAP;
@@ -346,7 +347,10 @@ export async function renderShareImage(name: string, data: Insights): Promise<Bl
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
   font(ctx, 800, 30);
   ctx.textAlign = 'center';
-  ctx.fillText(`Hecho con ${APP_NAME}`, W / 2, H - 64);
+  ctx.fillText(`Hecho con ${APP_NAME}`, W / 2, H - 92);
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  font(ctx, 700, 26);
+  ctx.fillText(APP_HOST, W / 2, H - 52);
 
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('No se pudo generar la imagen.'))), 'image/png');

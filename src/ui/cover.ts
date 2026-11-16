@@ -56,3 +56,27 @@ export function prefetchCovers(tracks: readonly Track[]): void {
     }
   }
 }
+
+/**
+ * Carátula como imagen lista para dibujar en un canvas (la imagen del resumen), o null si no se pudo conseguir.
+ * Se pide con CORS: si el CDN no lo permite, la carga falla y no se dibuja nada, en vez de «contaminar» el canvas.
+ */
+export async function coverImage(trackId: string, timeoutMs = 4000): Promise<HTMLImageElement | null> {
+  const url = await loader.request(trackId, () => true).catch(() => null);
+  if (!url) return null;
+  return new Promise<HTMLImageElement | null>((resolve) => {
+    const img = new Image();
+    const timer = window.setTimeout(() => resolve(null), timeoutMs);
+    img.crossOrigin = 'anonymous';
+    img.referrerPolicy = 'no-referrer';
+    img.onload = () => {
+      window.clearTimeout(timer);
+      resolve(img);
+    };
+    img.onerror = () => {
+      window.clearTimeout(timer);
+      resolve(null);
+    };
+    img.src = url;
+  });
+}
