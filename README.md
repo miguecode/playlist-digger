@@ -3,7 +3,7 @@
 Visor de playlists de Spotify exportadas a CSV con [Exportify](https://exportify.net/).
 Arrastrás el CSV y obtenés una tabla interactiva con búsqueda, orden, columnas a elección y filtros.
 
-**Todo corre en el navegador**: el archivo no se sube a ningún servidor.
+**Todo corre en el navegador**: el archivo no se sube a ningún servidor. La única llamada externa son las carátulas, que se piden al endpoint público oEmbed de Spotify (se envía solo el ID de las canciones que se ven; sin cuenta ni claves).
 
 ## Qué hace
 
@@ -24,6 +24,7 @@ Arrastrás el CSV y obtenés una tabla interactiva con búsqueda, orden, columna
   - **Canciones repetidas:** un botón junto al nombre de la playlist avisa si hay canciones repetidas, por ID de Spotify o por mismo nombre + mismos artistas (el single y el tema dentro de un álbum), con su posición y un atajo para buscarlas en la tabla.
   - **Vista de tarjetas:** el selector de dos íconos (tabla / tarjetas) de la barra cambia la lista por una grilla de tarjetas (una por canción, con nombre, artistas, álbum y año, duración y popularidad). Al tocar una tarjeta se abre el detalle con todos los datos de las columnas disponibles. En tarjetas se ordena con el selector «Ordenar». También es virtual (solo dibuja lo que se ve), respeta búsqueda y filtros y se recuerda entre visitas.
   - En el celular solo la canción es un enlace (las búsquedas de artista, álbum y sello no funcionan bien allá) y los enlaces siempre están activados.
+  - **Carátulas:** las tarjetas y el detalle muestran la carátula de cada canción (se cargan al verse; si Spotify no responde queda un ícono de nota).
   - **Solo la lista (celular):** un botón pequeño al lado de la búsqueda oculta todo lo de arriba y deja únicamente la tabla o las tarjetas; «Mostrar todo» lo vuelve a mostrar.
   - **En el celular:** la tabla no deja columnas fijas (se ve todo lo que está a la derecha), el botón de atajos se oculta y en la pantalla inicial el aviso legal queda al final del scroll, con los enlaces siempre a la vista.
   - **Atajos de teclado:** `/` buscar, `F` filtros, `R` resumen, `D` repetidas, `?` ayuda, `Esc` cierra o borra la búsqueda.
@@ -70,7 +71,8 @@ src/
 ## Seguridad y privacidad
 
 - El texto del CSV siempre se inserta como texto, nunca como HTML.
-- `vercel.json` define una Content-Security-Policy estricta (sin scripts ni estilos en línea).
+- `vercel.json` define una Content-Security-Policy estricta (sin scripts ni estilos en línea); solo permite conectarse a `open.spotify.com` y cargar imágenes de `i.scdn.co`.
+- Las carátulas solo se aceptan si vienen por https del CDN de Spotify, se piden de a 4, solo las visibles, y se guardan únicamente mientras la pestaña esté abierta (los términos de Spotify solo permiten cachear carátulas de forma temporal).
 - Al exportar, los valores que empiezan con `=`, `+`, `-` o `@` se escapan para que Excel o Sheets no los interpreten como fórmulas.
 
 ## Aviso
